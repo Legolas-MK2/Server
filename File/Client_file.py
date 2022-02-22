@@ -16,12 +16,15 @@ class Read_Thread(threading.Thread):
 
         while running:
             try:
-                Sender = self.Read()
+                recv = self.Read()
+                recv = recv.split(" ")
+                Sender = recv [0]
+                recv.pop(0)
                 if len(Sender) > 0:
                     if Sender == "Server":
-                        self.Server()
+                        self.Server(recv)
                     else:
-                        msg = self.Read()
+                        msg = " ".join(recv)
                         nachrichten.append(f"von {Sender}: " + msg)
             except Exception as e:
                 running = False
@@ -31,24 +34,23 @@ class Read_Thread(threading.Thread):
         global cipher
         recv = self.socket.recv(4096)
         recv = cipher.AES_decrypt_text(recv)
-        return str(recv, "utf-8")
+        recv = str(recv, "utf-8")
+        return recv
 
-    def Server(self):
+    def Server(self,command):
         global running, cipher, key, user_online
-        sleep(0.1)
-        command = self.Read()
-        print("command:",command)
-        if command == "#C" and running == False:
+
+        if command[0] == "#C" and running == False:
             client_socket.close()
             print("die Verbindung wurde geschlossen",end="")
             exit()
-        elif command == "#O":
+        elif command[0] == "#O":
             sleep(0.1)
-            recv = self.Read().split(" ")
-            user = recv[1]
-            if recv[0] == "-" and recv[1] in user_online:
+            recv = command[1]
+            user = command[2]
+            if recv == "-" and user in user_online:
                 user_online.remove(user)
-            elif recv[0] == "+" and recv[1] not in user_online:
+            elif recv == "+" and user not in user_online:
                 user_online.append(user)
         else:
             print("ein nicht gültiger Befehl vom Server ist gekommen")
@@ -61,7 +63,7 @@ def Send(msg):
 
 def Update():
     global nachrichten
-    print(str(len(nachrichten)),"neue Nachrichten")
+    print(str(len(nachrichten))+" neue Nachrichten")
 
     if len(nachrichten) > 0:
         for msg in nachrichten:
@@ -74,9 +76,7 @@ def Send_to_client(Empfänger,msg):
     global client_socket, cipher
     msg = msg.strip()
     if len(msg) > 0:
-        Send(Empfänger)
-        sleep(0.1)
-        Send(msg)
+        Send(Empfänger+" "+msg)
         print("Nachicht wurde gesendet")
     else:
         print("Die Nachicht hat kein Inhalt")
@@ -84,9 +84,7 @@ def Send_to_client(Empfänger,msg):
 def close():
     global running, client_socket, cipher
     print("der Client wird geschlossen")
-    Send("Server")
-    sleep(0.1)
-    Send("#C")
+    Send("Server #C")
     running = False
 
 def online():
