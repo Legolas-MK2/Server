@@ -30,9 +30,10 @@ class Read_Thread(threading.Thread):
                 running = False
                 print("Thread wurde Abgebrochen\nexcept: "+str(e))
 
-    def Read(self):
+    def Read(self,metadaten):
         recv = self.socket.recv(4096)
-        recv = cipher.AES_decrypt_text(recv)
+        if metadaten:
+            recv = cipher.AES_decrypt_text(recv)
         recv = str(recv, "utf-8")
         sleep(0.1)
         return recv
@@ -54,10 +55,10 @@ class Read_Thread(threading.Thread):
         else:
             print("ein nicht gültiger Befehl vom Server ist gekommen")
 
-def Send(msg):
+def Send(msg,key):
     global client_socket, cipher
     msg = bytes(msg, "utf-8")
-    msg = cipher.AES_encrypt_text(msg)
+    msg = cipher.AES_encrypt_text(msg,key)
     client_socket.send(msg)
     sleep(0.1)
 
@@ -76,7 +77,7 @@ def Send_to_client(Empfänger,msg):
     global client_socket, cipher
     msg = msg.strip()
     if len(msg) > 0:
-        Send(Empfänger)
+        Send(Empfänger,)
         time.sleep(0.1)
         Send(msg)
         print("Nachicht wurde gesendet")
@@ -118,18 +119,18 @@ def switch(Befehl,parameter1 = "", parameter2 = ""):
         print(f"Der Befehl {Befehl} ist entweder falsch geschrieben oder konnte nicht gefunden werden.")
 
 #Global Variable
-key = b'\x01\x88/\xca\xb9\x08\xbc\x10\x84\xe9\x97\x0bXs\x96\xaa' #Key für Client und Client
+key_client = b'\x01\x88/\xca\xb9\x08\xbc\x10\x84\xe9\x97\x0bXs\x96\xaa' #Key für Client und Client
+key_server = b'\x02\x88/\xca\xb9\x08\xbc\x10\x84\xf9\x97\x0bXs\x96\xaa'
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 running = True
 nachrichten = []
 cipher = Cipher()
-cipher.key = key
 user_online = []
 
 
 if __name__ == "__main__":
-    # pk
-    cipher.RSA
+    # RSA
+    cipher.RSA_generate_sk()
     #connect
     try_connect = True
     while try_connect:

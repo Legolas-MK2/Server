@@ -13,13 +13,14 @@ class client(threading.Thread):
         (self.Socket, self.addr) = sock
         self.Name = ""
         self.running = True
-        self.cipher.key = b'\x01\x88/\xca\xb9\x08\xbc\x10\x84\xe9\x97\x0bXs\x96\xaa'
+        self.key = b'\x01\x88/\xca\xb9\x08\xbc\x10\x84\xe9\x97\x0bXs\x96\xaa'
 
 
-    def Send(self,msg):
+
+    def Send(self,msg,key):
         sleep(0.1)
         msg = bytes(msg, "utf-8")
-        msg = self.cipher.AES_encrypt_text(msg)
+        msg = self.cipher.AES_encrypt_text(msg,key)
         self.Socket.send(msg)
 
     def run(self):
@@ -28,11 +29,12 @@ class client(threading.Thread):
 
             while self.running:
                 recv = self.Read()
-                print(1,recv)
                 self.data_Transfer(recv)
+
             print(f"Der Client {self.Name} hat sich geschlossen")
         except:
             print(f"die Verbindung zu dem Client {self.Name if len(self.Name)> 0 else self.ID} wurde verloren")
+
             self.running = False
             self.sub_from_onlinelist(self.Name)
             ID_list.pop(self.ID)
@@ -41,6 +43,7 @@ class client(threading.Thread):
         while len(self.Name) < 1:
             recv = self.Read()
             found_name = False
+
             if len(ID_list) > 0:
                 for s in ID_list:
                     if ID_list[s].Name == recv:
@@ -53,18 +56,20 @@ class client(threading.Thread):
             else:
                 self.Send(" ")
             self.Name = recv
+
         print(f"Der Nutzer {self.Name} hat sich eingeloggt und hat die ID {self.ID} bekommen")
         self.add_to_onlinelist(self.Name)
+
         for s in ID_list:
             try:
-                self.Send("Server")
-                self.Send("#O + " + ID_list[s].Name)
+                self.Send("Server",self.key)
+                self.Send("#O + " + ID_list[s].Name,self.key)
             except:
                 pass
 
     def Read(self):
         recv = self.Socket.recv(4096)
-        recv = str(self.cipher.AES_decrypt_text(recv), "utf-8")
+        recv = str(self.cipher.AES_decrypt_text(recv,self.key), "utf-8")
         return recv
 
     def ask_Server(self,parameter):
@@ -85,6 +90,7 @@ class client(threading.Thread):
 
     def data_Transfer(self, Empfänger_name):
         msg = self.Read()
+
         if Empfänger_name == "Server":
             self.ask_Server(msg)
         else:
@@ -108,6 +114,7 @@ class client(threading.Thread):
 
     def add_to_onlinelist(self, name):
         global ID_list
+
         for s in ID_list:
             try:
                 if name != ID_list[s]:
@@ -118,6 +125,7 @@ class client(threading.Thread):
 
     def sub_from_onlinelist(self, name):
         global ID_list
+
         for s in ID_list:
             try:
                 ID_list[s].Send("Server")
