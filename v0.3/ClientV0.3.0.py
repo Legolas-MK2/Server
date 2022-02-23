@@ -1,25 +1,25 @@
 import socket
 import threading
 import os
+import time
 from time import sleep
 from Verschlüsselung import Cipher
 
 class Read_Thread(threading.Thread):
     global nachrichten,running, key
 
-    def __init__(self,socket):
+    def __init__(self, socket, cipher):
         threading.Thread.__init__(self)
         self.socket = socket
+        self.cipher = cipher
 
     def run(self):
         global running, cipher
 
         while running:
             try:
-                recv = self.Read()
-                recv = recv.split(" ")
-                Sender = recv [0]
-                recv.pop(0)
+                Sender = self.Read()
+                recv = self.Read().split(" ")
                 if len(Sender) > 0:
                     if Sender == "Server":
                         self.Server(recv)
@@ -28,16 +28,16 @@ class Read_Thread(threading.Thread):
                         nachrichten.append(f"von {Sender}: " + msg)
             except Exception as e:
                 running = False
-                print("Thread wurde geschlossen \n except: "+str(e))
+                print("Thread wurde Abgebrochen\nexcept: "+str(e))
 
     def Read(self):
-        global cipher
         recv = self.socket.recv(4096)
         recv = cipher.AES_decrypt_text(recv)
         recv = str(recv, "utf-8")
+        sleep(0.1)
         return recv
 
-    def Server(self,command):
+    def Server(self, command):
         global running, cipher, key, user_online
 
         if command[0] == "#C" and running == False:
@@ -45,7 +45,6 @@ class Read_Thread(threading.Thread):
             print("die Verbindung wurde geschlossen",end="")
             exit()
         elif command[0] == "#O":
-            sleep(0.1)
             recv = command[1]
             user = command[2]
             if recv == "-" and user in user_online:
@@ -60,6 +59,7 @@ def Send(msg):
     msg = bytes(msg, "utf-8")
     msg = cipher.AES_encrypt_text(msg)
     client_socket.send(msg)
+    sleep(0.1)
 
 def Update():
     global nachrichten
@@ -76,7 +76,9 @@ def Send_to_client(Empfänger,msg):
     global client_socket, cipher
     msg = msg.strip()
     if len(msg) > 0:
-        Send(Empfänger+" "+msg)
+        Send(Empfänger)
+        time.sleep(0.1)
+        Send(msg)
         print("Nachicht wurde gesendet")
     else:
         print("Die Nachicht hat kein Inhalt")
@@ -84,7 +86,8 @@ def Send_to_client(Empfänger,msg):
 def close():
     global running, client_socket, cipher
     print("der Client wird geschlossen")
-    Send("Server #C")
+    Send("Server")
+    Send("#C")
     running = False
 
 def online():
@@ -125,6 +128,8 @@ user_online = []
 
 
 if __name__ == "__main__":
+    # pk
+    cipher.RSA
     #connect
     try_connect = True
     while try_connect:
@@ -152,7 +157,7 @@ if __name__ == "__main__":
             if recv != " ":
                 Name = ""
 
-    t = Read_Thread(client_socket)
+    t = Read_Thread(client_socket,cipher)
     t.start()
     running = True
     # Main loop

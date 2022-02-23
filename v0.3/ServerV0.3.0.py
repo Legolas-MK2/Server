@@ -15,10 +15,11 @@ class client(threading.Thread):
         self.running = True
         self.cipher.key = b'\x01\x88/\xca\xb9\x08\xbc\x10\x84\xe9\x97\x0bXs\x96\xaa'
 
+
     def Send(self,msg):
+        sleep(0.1)
         msg = bytes(msg, "utf-8")
         msg = self.cipher.AES_encrypt_text(msg)
-        sleep(0.1)
         self.Socket.send(msg)
 
     def run(self):
@@ -27,6 +28,7 @@ class client(threading.Thread):
 
             while self.running:
                 recv = self.Read()
+                print(1,recv)
                 self.data_Transfer(recv)
             print(f"Der Client {self.Name} hat sich geschlossen")
         except:
@@ -55,7 +57,8 @@ class client(threading.Thread):
         self.add_to_onlinelist(self.Name)
         for s in ID_list:
             try:
-                self.Send("Server #O + " + ID_list[s].Name)
+                self.Send("Server")
+                self.Send("#O + " + ID_list[s].Name)
             except:
                 pass
 
@@ -68,7 +71,8 @@ class client(threading.Thread):
         if parameter == '#C':
             print(f"Der Client {self.Name} wird geschlossen")
 
-            self.Send("Server #C")
+            self.Send("Server")
+            self.Send("#C")
 
             self.running = False
             self.sub_from_onlinelist(self.Name)
@@ -77,13 +81,10 @@ class client(threading.Thread):
         elif parameter == "#O":
             pass
         else:
-            print(f"Der Client {self.Name} hat versucht an den Server die nachicht '{parameter}' zusenden ohne das der Server eine Antwort hat")
+            print(f"Der Client {self.Name} hat versucht an den Server die Nachicht '{parameter}' zusenden ohne das der Server eine Antwort hat")
 
-    def data_Transfer(self,recv):
-        recv = recv.split(" ")
-        Empfänger_name = recv[0]
-        recv.pop(0)
-        msg = " ".join(recv)
+    def data_Transfer(self, Empfänger_name):
+        msg = self.Read()
         if Empfänger_name == "Server":
             self.ask_Server(msg)
         else:
@@ -100,7 +101,8 @@ class client(threading.Thread):
                     print(f"{self.Name} --> {Empfänger_name}")
                     print("msg -> " + msg)
 
-                    ID_list[Empfänger_ID].Send(self.Name+" "+msg)
+                    ID_list[Empfänger_ID].Send(self.Name)
+                    ID_list[Empfänger_ID].Send(msg)
                 else:
                     print(f"Der Client {Empfänger_name} existiert nicht")
 
@@ -109,7 +111,8 @@ class client(threading.Thread):
         for s in ID_list:
             try:
                 if name != ID_list[s]:
-                    ID_list[s].Send("Server #O + " + name)
+                    ID_list[s].Send("Server")
+                    ID_list[s].Send("#O + " + name)
             except:
                 pass
 
@@ -117,7 +120,8 @@ class client(threading.Thread):
         global ID_list
         for s in ID_list:
             try:
-                ID_list[s].Send("Server #O - " + name)
+                ID_list[s].Send("Server")
+                ID_list[s].Send("#O - " + name)
             except:
                 pass
 
