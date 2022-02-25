@@ -20,33 +20,25 @@ class Read_Thread(threading.Thread):
         global running
 
         while running:
-            #try:
-            print(1)
-            Sender = self.Read(key_server)
-            print(2)
-            print(Sender)
-            if len(Sender) > 0:
-                print(3)
-                if Sender == "Server":
-                    print(4)
-                    recv = self.Read(key_server).split(" ")
-                    self.Server(recv)
-                else:
-                    print(5)
-                    recv = self.Read(key_client).split(" ")
-                    msg = " ".join(recv)
-                    nachrichten.append(f"von {Sender}: " + msg)
-            """except Exception as e:
+            try:
+                Sender = self.Read(key_server)
+                if len(Sender) > 0:
+                    if Sender == "Server":
+                        recv = self.Read(key_server).split(" ")
+                        self.Server(recv)
+                    else:
+                        recv = self.Read(key_client).split(" ")
+                        msg = " ".join(recv)
+                        nachrichten.append(f"von {Sender}: " + msg)
+            except Exception as e:
                 running = False
-                print("\n\nThread wurde Abgebrochen\nexcept: "+str(e))"""
+                print("\n\nThread wurde Abgebrochen\nexcept: "+str(e))
 
 
 
     def Server(self, command):
         global running, user_online
-        print(command)
         if command[0] == "#C" and running == False:
-            print("fufhhfahhhuofhoh")
             client_socket.close()
             print("die Verbindung wurde geschlossen",end="")
             exit()
@@ -57,14 +49,11 @@ class Read_Thread(threading.Thread):
                 user_online.remove(user)
             elif recv == "+" and user not in user_online:
                 user_online.append(user)
-            print(6)
         else:
             print("ein nicht gültiger Befehl vom Server ist gekommen")
 
     def Read(self, key):
         recv = client_socket.recv(4096)
-        print("msg", recv)
-        print("key", key)
         recv = cipher.AES_decrypt_text(recv, key)
         recv = str(recv, "utf-8")
         sleep(0.1)
@@ -112,9 +101,10 @@ def close():
     global running
     global client_socket
     global cipher
+
     print("die Verbindung wird geschlossen")
     Send("Server", key_server)
-    Send("#C", key_client)
+    Send("#C", key_server)
     running = False
 
 def online():
