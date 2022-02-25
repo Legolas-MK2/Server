@@ -1,47 +1,52 @@
 import socket
 import threading
 import os
-import time
 from time import sleep
 from Verschlüsselung import Cipher
 
 class Read_Thread(threading.Thread):
-    global nachrichten,running, key
+    global nachrichten
+    global running
+    global cipher
+    global key_server
+    global key_client
 
-    def __init__(self, socket, cipher):
+    def __init__(self, socket,cipher):
         threading.Thread.__init__(self)
         self.socket = socket
         self.cipher = cipher
 
     def run(self):
-        global running, cipher
+        global running
 
         while running:
-            try:
-                Sender = self.Read()
-                recv = self.Read().split(" ")
-                if len(Sender) > 0:
-                    if Sender == "Server":
-                        self.Server(recv)
-                    else:
-                        msg = " ".join(recv)
-                        nachrichten.append(f"von {Sender}: " + msg)
-            except Exception as e:
+            #try:
+            print(1)
+            Sender = self.Read(key_server)
+            print(2)
+            print(Sender)
+            if len(Sender) > 0:
+                print(3)
+                if Sender == "Server":
+                    print(4)
+                    recv = self.Read(key_server).split(" ")
+                    self.Server(recv)
+                else:
+                    print(5)
+                    recv = self.Read(key_client).split(" ")
+                    msg = " ".join(recv)
+                    nachrichten.append(f"von {Sender}: " + msg)
+            """except Exception as e:
                 running = False
-                print("Thread wurde Abgebrochen\nexcept: "+str(e))
+                print("\n\nThread wurde Abgebrochen\nexcept: "+str(e))"""
 
-    def Read(self,metadaten):
-        recv = self.socket.recv(4096)
-        if metadaten:
-            recv = cipher.AES_decrypt_text(recv)
-        recv = str(recv, "utf-8")
-        sleep(0.1)
-        return recv
+
 
     def Server(self, command):
-        global running, cipher, key, user_online
-
+        global running, user_online
+        print(command)
         if command[0] == "#C" and running == False:
+            print("fufhhfahhhuofhoh")
             client_socket.close()
             print("die Verbindung wurde geschlossen",end="")
             exit()
@@ -52,13 +57,30 @@ class Read_Thread(threading.Thread):
                 user_online.remove(user)
             elif recv == "+" and user not in user_online:
                 user_online.append(user)
+            print(6)
         else:
             print("ein nicht gültiger Befehl vom Server ist gekommen")
 
+    def Read(self, key):
+        recv = client_socket.recv(4096)
+        print("msg", recv)
+        print("key", key)
+        recv = cipher.AES_decrypt_text(recv, key)
+        recv = str(recv, "utf-8")
+        sleep(0.1)
+        return recv
+
+def Read(key):
+    recv = client_socket.recv(4096)
+    recv = cipher.AES_decrypt_text(recv, key)
+    recv = str(recv, "utf-8")
+    sleep(0.1)
+    return recv
+
 def Send(msg,key):
-    global client_socket, cipher
+    global client_socket
     msg = bytes(msg, "utf-8")
-    msg = cipher.AES_encrypt_text(msg,key)
+    msg = cipher.AES_encrypt_text(msg, key)
     client_socket.send(msg)
     sleep(0.1)
 
@@ -74,21 +96,25 @@ def Update():
         print("Keine neuen Nachichten bekommen")
 
 def Send_to_client(Empfänger,msg):
-    global client_socket, cipher
+    global client_socket
+    global cipher
+    global key_server
+    global key_client
     msg = msg.strip()
     if len(msg) > 0:
-        Send(Empfänger,)
-        time.sleep(0.1)
-        Send(msg)
+        Send(Empfänger, key_server)
+        Send(msg, key_client)
         print("Nachicht wurde gesendet")
     else:
         print("Die Nachicht hat kein Inhalt")
 
 def close():
-    global running, client_socket, cipher
-    print("der Client wird geschlossen")
-    Send("Server")
-    Send("#C")
+    global running
+    global client_socket
+    global cipher
+    print("die Verbindung wird geschlossen")
+    Send("Server", key_server)
+    Send("#C", key_client)
     running = False
 
 def online():
@@ -119,7 +145,7 @@ def switch(Befehl,parameter1 = "", parameter2 = ""):
         print(f"Der Befehl {Befehl} ist entweder falsch geschrieben oder konnte nicht gefunden werden.")
 
 #Global Variable
-key_client = b'\x01\x88/\xca\xb9\x08\xbc\x10\x84\xe9\x97\x0bXs\x96\xaa' #Key für Client und Client
+key_client = b'\x9c\x98l0\xe4\xddPJ\xd5\x96\xfb\x83\xb9\x08\xb4\x1e'
 key_server = b'\x02\x88/\xca\xb9\x08\xbc\x10\x84\xf9\x97\x0bXs\x96\xaa'
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 running = True
@@ -130,7 +156,7 @@ user_online = []
 
 if __name__ == "__main__":
     # RSA
-    cipher.RSA_generate_sk()
+    #cipher.RSA_generate_sk()
     #connect
     try_connect = True
     while try_connect:
@@ -140,7 +166,6 @@ if __name__ == "__main__":
         except:
             print("Kein Server gefunden")
             pass
-
     #set name
     Name = ""
     while len(Name) < 1:
@@ -152,13 +177,12 @@ if __name__ == "__main__":
         if Name == "Server" or " " in Name:
             Name = ""
         else:
-            Send(Name)
-            recv = client_socket.recv(4096)
-            recv = str(cipher.AES_decrypt_text(recv),"utf-8")
+            Send(Name, key_server)
+            recv = Read(key_server)
             if recv != " ":
                 Name = ""
 
-    t = Read_Thread(client_socket,cipher)
+    t = Read_Thread(client_socket, cipher)
     t.start()
     running = True
     # Main loop
