@@ -12,22 +12,19 @@ class Cipher:
     def __init__(self,e = ""):
         pass
     def RSA_generate_sk(self):
-        key = RSA.generate(4096)
-        with open("secret_key.pem", "wb") as f_out:
-            f_out.write(key.exportKey(format="PEM"))
+        key = RSA.generate(2048)
+        return key.exportKey(format="PEM")
 
-    def RSA_import_key(self,file_name):
-        with open(file_name, "rb") as f_in:
-            key = RSA.importKey(f_in.read())
+    def RSA_import_key(self, sk):
+        key = RSA.importKey(sk)
         return key
 
-    def RSA_generate_pk(self,sk):
+    def RSA_generate_pk(self, sk):
         pk = sk.public_key()
-        with open("public_key.pem", "wb") as f_out:
-            f_out.write(pk.exportKey(format="PEM"))
+        pk = pk.exportKey(format="PEM")
         return pk
 
-    def RSA_encrypt(self,pk, msg):
+    def RSA_encrypt(self, pk, msg):
         cipher = PKCS1_OAEP.new(pk)
         c = cipher.encrypt(msg)
         return c
@@ -87,6 +84,7 @@ class Cipher:
     def generate_key(self,size):
         return md5(Random.get_random_bytes(size)).digest()
 
+
 chunks = 32 * 1024
 if __name__ == "__main__":
     cipher = Cipher()
@@ -95,9 +93,38 @@ if __name__ == "__main__":
     print(crypt_text)
     print(cipher.AES_decrypt_text(crypt_text,key = key))
 
-    cipher.RSA_generate_sk()
-    key = cipher.RSA_import_key("secret_key.pem")
+    sk = cipher.RSA_generate_sk()
+    key = cipher.RSA_import_key(sk)
     pk = cipher.RSA_generate_pk(key)
     c = cipher.RSA_encrypt(pk, b"das ist eine nachicht")
     print(c)
     m = cipher.RSA_decrypt(key, c)
+
+
+
+from Crypto.PublicKey import RSA
+from Crypto import Random
+from Crypto.Cipher import PKCS1_OAEP
+
+
+"""def rsa_encrypt_decrypt():
+    key = RSA.generate(2048)
+    private_key = key.export_key('PEM')
+    public_key = key.publickey().exportKey('PEM')
+    message = input('plain text for RSA encryption and decryption:')
+    message = str.encode(message)
+
+    rsa_public_key = RSA.importKey(public_key)
+    rsa_public_key = PKCS1_OAEP.new(rsa_public_key)
+    encrypted_text = rsa_public_key.encrypt(message)
+    #encrypted_text = b64encode(encrypted_text)
+    print('your encrypted_text is : {}'.format(encrypted_text))
+
+
+    rsa_private_key = RSA.importKey(private_key)
+    rsa_private_key = PKCS1_OAEP.new(rsa_private_key)
+    decrypted_text = rsa_private_key.decrypt(encrypted_text)
+
+    print('your decrypted_text is : {}'.format(decrypted_text))
+
+rsa_encrypt_decrypt()"""
