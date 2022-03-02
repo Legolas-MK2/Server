@@ -118,7 +118,7 @@ def close():
     running = False
 
 def online():
-    #test
+    #tes
     l = ""
     for user in user_online:
         l += user+", "
