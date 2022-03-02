@@ -1,7 +1,7 @@
 import socket
 import threading
 from time import sleep
-from Verschlüsselung import Cipher
+import Cipher
 
 class client(threading.Thread):
     global ID_list
@@ -9,7 +9,6 @@ class client(threading.Thread):
     def __init__(self, ID,sock):
         threading.Thread.__init__(self)
 
-        self.cipher = Cipher()
         self.ID = ID
         (self.Socket, self.addr) = sock
         self.Name = ""
@@ -18,10 +17,9 @@ class client(threading.Thread):
 
     def Send(self, msg, crypt=True):
         sleep(0.1)
-
         if crypt:
             msg = bytes(msg, "utf-8")
-            msg = self.cipher.AES_encrypt_text(msg,self.key)
+            msg = Cipher.AES_encrypt_text(msg, self.key)
 
         self.Socket.send(msg)
 
@@ -44,8 +42,8 @@ class client(threading.Thread):
 
     def set_key(self):
         client_pk = self.Read(False)
-        key = self.cipher.generate_key(20)
-        msg = self.cipher.RSA_encrypt(client_pk, key)
+        self.key = Cipher.generate_key(20)
+        msg = Cipher.RSA_encrypt(client_pk, self.key)
         self.Send(msg, False)
 
     def set_name(self):
@@ -82,7 +80,7 @@ class client(threading.Thread):
         recv = self.Socket.recv(4096)
 
         if crypt:
-            recv = self.cipher.AES_decrypt_text(recv,self.key)
+            recv = Cipher.AES_decrypt_text(recv, self.key)
             recv = str(recv, "utf-8")
 
         sleep(0.1)

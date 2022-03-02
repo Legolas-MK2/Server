@@ -2,19 +2,17 @@ import socket
 import threading
 import os
 from time import sleep
-from Verschlüsselung import Cipher
+import Cipher
 
 class Read_Thread(threading.Thread):
     global nachrichten
     global running
-    global cipher
     global key_server
     global key_client
 
-    def __init__(self, socket,cipher):
+    def __init__(self, socket):
         threading.Thread.__init__(self)
         self.socket = socket
-        self.cipher = cipher
 
     def run(self):
         global running
@@ -59,7 +57,7 @@ class Read_Thread(threading.Thread):
 
     def Read(self, key):
         recv = client_socket.recv(4096)
-        recv = cipher.AES_decrypt_text(recv, key)
+        recv = Cipher.AES_decrypt_text(recv, key)
         recv = str(recv, "utf-8")
         sleep(0.1)
 
@@ -67,8 +65,9 @@ class Read_Thread(threading.Thread):
 
 def Read(key):
     recv = client_socket.recv(4096)
+
     if key != None:
-        recv = cipher.AES_decrypt_text(recv, key)
+        recv = Cipher.AES_decrypt_text(recv, key)
         recv = str(recv, "utf-8")
     sleep(0.1)
 
@@ -76,17 +75,16 @@ def Read(key):
 
 def Send(msg,key):
     global client_socket
-
     if key != None:
         msg = bytes(msg, "utf-8")
-        msg = cipher.AES_encrypt_text(msg, key)
+        msg = Cipher.AES_encrypt_text(msg, key)
     client_socket.send(msg)
     sleep(0.1)
 
 def Update():
     global nachrichten
 
-    print(str(len(nachrichten))+" neue Nachrichten")
+    print(len(nachrichten), "neue Nachrichten")
 
     if len(nachrichten) > 0:
         for msg in nachrichten:
@@ -98,7 +96,6 @@ def Update():
 
 def Send_to_client(Empfänger,msg):
     global client_socket
-    global cipher
     global key_server
     global key_client
 
@@ -114,7 +111,6 @@ def Send_to_client(Empfänger,msg):
 def close():
     global running
     global client_socket
-    global cipher
 
     print("die Verbindung wird geschlossen")
     Send("Server", key_server)
@@ -126,7 +122,6 @@ def online():
 
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
-
 
 def switch(Befehl,parameter1 = "", parameter2 = ""):
     Befehl_update = ["update", "reload", "msg", "#u"]
@@ -150,16 +145,13 @@ def switch(Befehl,parameter1 = "", parameter2 = ""):
 
 #Global Variable
 key_client = b'\x9c\x98l0\xe4\xddPJ\xd5\x96\xfb\x83\xb9\x08\xb4\x1e'
-key_server = b''
+key_server = None
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 running = True
 nachrichten = []
-cipher = Cipher()
 user_online = []
 
-
 if __name__ == "__main__":
-
 
     #connect
     try_connect = True
@@ -172,13 +164,10 @@ if __name__ == "__main__":
             pass
 
     # RSA
-    cipher.RSA_generate_sk()
-    key = cipher.RSA_import_key("secret_key.pem")
-    pk = cipher.RSA_generate_pk(key)
-    bytes(pk)
-    print(f"'{type(pk)}'")
+    pk, sk = Cipher.RSA_generate_pk_sk()
     Send(pk, None)
-    key_server = Read(None)
+    key = Read(None)
+    key_server = Cipher.RSA_decrypt(sk, key)
 
     #set name
     Name = ""
@@ -196,7 +185,7 @@ if __name__ == "__main__":
             if recv != " ":
                 Name = ""
 
-    t = Read_Thread(client_socket, cipher)
+    t = Read_Thread(client_socket)
     t.start()
     running = True
 
