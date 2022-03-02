@@ -118,7 +118,10 @@ def close():
     running = False
 
 def online():
-    print(user_online)
+    l = ""
+    for user in user_online:
+        l += user+", "
+    print(l[:-2])
 
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
