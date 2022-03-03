@@ -29,6 +29,7 @@ class Read_Thread(threading.Thread):
                         recv = self.Read(key_client).split(" ")
                         msg = " ".join(recv)
                         nachrichten.append(f"von {Sender}: " + msg)
+                        list_log.append(f"von {Sender}: " + msg)
 
             except Exception as e:
                 running = False
@@ -40,8 +41,8 @@ class Read_Thread(threading.Thread):
 
         if command[0] == "#C" and running == False:
             client_socket.close()
-            print("die Verbindung wurde geschlossen",end="")
-            exit()
+            print("die Verbindung wurde geschlossen", end="")
+            exit(0)
 
         elif command[0] == "#O":
             recv = command[1]
@@ -127,12 +128,23 @@ def online():
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
-def switch(Befehl,parameter1 = "", parameter2 = ""):
+def log():
+    global list_log
+
+    if len(list_log) > 0:
+        print(len(list_log), "Nachrichten")
+        for msg in list_log:
+            print(msg)
+    else:
+        print("Keine neuen Nachichten bekommen")
+
+def switch(Befehl, parameter1 = "", parameter2 = ""):
     Befehl_update = ["update", "reload", "msg", "#u"]
     Befehl_send = ["send", "an", "to", "#s"]
     Befehl_close = ["close", "exit", "taskkill", "#c"]
     Befehl_clear = ["cls", "clear"]
     Befehl_online = ["online", "online_list"]
+    Befehl_log = ["log"]
 
     if Befehl in Befehl_update:
         Update()
@@ -144,6 +156,8 @@ def switch(Befehl,parameter1 = "", parameter2 = ""):
         clear()
     elif Befehl in Befehl_online:
         online()
+    elif Befehl in Befehl_log:
+        log()
     else:
         print(f"Der Befehl {Befehl} ist entweder falsch geschrieben oder konnte nicht gefunden werden.")
 
@@ -154,6 +168,7 @@ client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 running = True
 nachrichten = []
 user_online = []
+list_log = []
 
 if __name__ == "__main__":
 
@@ -175,6 +190,7 @@ if __name__ == "__main__":
 
     #set name
     Name = ""
+    err = False
     while len(Name) < 1:
         try:
             clear()
@@ -191,7 +207,6 @@ if __name__ == "__main__":
 
     t = Read_Thread(client_socket)
     t.start()
-    running = True
 
     # Main loop
     while running == True:
