@@ -73,11 +73,13 @@ def Read(key):
 
     return recv
 
-def Send(msg,key):
+def Send(msg, key):
     global client_socket
+
     if key != None:
         msg = bytes(msg, "utf-8")
         msg = Cipher.AES_encrypt_text(msg, key)
+
     client_socket.send(msg)
     sleep(0.1)
 
@@ -89,12 +91,11 @@ def Update():
     if len(nachrichten) > 0:
         for msg in nachrichten:
             print(msg)
-
         nachrichten = []
     else:
         print("Keine neuen Nachichten bekommen")
 
-def Send_to_client(Empfänger,msg):
+def Send_to_client(Empfänger, msg):
     global client_socket
     global key_server
     global key_client
@@ -160,7 +161,7 @@ if __name__ == "__main__":
     try_connect = True
     while try_connect:
         try:
-            client_socket.connect(("127.0.0.1", 5000))
+            client_socket.connect(("192.168.178.140", 5000))
             try_connect = False
         except:
             print("Kein Server gefunden")

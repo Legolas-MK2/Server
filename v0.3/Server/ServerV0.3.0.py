@@ -31,14 +31,14 @@ class client(threading.Thread):
             while self.running:
                 recv = self.Read()
                 self.data_Transfer(recv)
-
-            print(f"Der Client {self.Name} hat sich geschlossen")
         except:
             print(f"die Verbindung zu dem Client {self.Name if len(self.Name)> 0 else self.ID} wurde verloren")
 
             self.running = False
             self.sub_from_onlinelist(self.Name)
             ID_list.pop(self.ID)
+
+        print(f"Der Thread vom Client {self.Name if len(self.Name)> 0 else self.ID} hat sich geschlossen")
 
     def set_key(self):
         client_pk = self.Read(False)
@@ -109,7 +109,6 @@ class client(threading.Thread):
         if Empfänger_name == "Server":
             msg = self.Read()
             self.ask_Server(msg)
-
         else:
             msg = self.Read(False)
 
@@ -157,7 +156,7 @@ ID_list = {}
 if __name__ == '__main__':
     Nutzer_max = 10
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(("127.0.0.1", 5000))
+    server_socket.bind(("192.168.178.140", 5000))
     server_socket.listen(Nutzer_max)
 
     for i in range(0, Nutzer_max):
