@@ -3,7 +3,7 @@ import threading
 import Cipher
 import socket
 import os
-
+#trest
 class Read_Thread(threading.Thread):
     global nachrichten
     global running
@@ -24,7 +24,6 @@ class Read_Thread(threading.Thread):
             if len(Sender) == 0:
                 continue
 
-<<<<<<< HEAD
             if Sender == "Server":
                 recv = self.Read(key_server).split(" ")
                 self.Server(recv)
@@ -34,17 +33,6 @@ class Read_Thread(threading.Thread):
                 msg = " ".join(recv)
                 nachrichten.append(f"von {Sender}: " + msg)
                 list_log.append(f"von {Sender}: " + msg)
-=======
-                if len(Sender) > 0:
-                    if Sender == "Server":
-                        recv = self.Read(key_server).split(" ")
-                        self.Server(recv)
-                    else:
-                        recv = self.Read(key_client).split(" ")
-                        msg = " ".join(recv)
-                        nachrichten.append(f"von {Sender}: " + msg)
-                        list_log.append(f"von {Sender}: " + msg)
->>>>>>> 23f6a5146c0235f6afb2b4b030db15347d5d2201
 
             #except Exception as e:
             #    running = False
@@ -110,18 +98,15 @@ def Send(msg, key):
 def Update():
     global nachrichten
 
-<<<<<<< HEAD
     if len(nachrichten) == 0:
-=======
-    if len(nachrichten) > 0:
-        print(len(nachrichten), "neue Nachrichten")
-        for msg in nachrichten:
-            print(msg)
-        nachrichten = []
-    else:
->>>>>>> 23f6a5146c0235f6afb2b4b030db15347d5d2201
         print("Keine neuen Nachichten bekommen")
         return
+
+    print(len(nachrichten), "neue Nachrichten")
+    for msg in nachrichten:
+        print(msg)
+    nachrichten = []
+
 
     print(len(nachrichten), "neue Nachrichten")
     for msg in nachrichten:
@@ -170,26 +155,16 @@ def clear():
 def log():
     global list_log
 
-<<<<<<< HEAD
     if len(list_log) < 1:
-        print("Keine neuen Nachichten bekommen")
+        print("Keine Nachichten bekommen")
         return
 
     print(len(list_log), "Nachrichten")
     for msg in list_log:
         print(msg)
 
-def switch(Befehl,parameter1 = "", parameter2 = ""):
-=======
-    if len(list_log) > 0:
-        print(len(list_log), "Nachrichten")
-        for msg in list_log:
-            print(msg)
-    else:
-        print("Keine neuen Nachichten bekommen")
 
 def switch(Befehl, parameter1 = "", parameter2 = ""):
->>>>>>> 23f6a5146c0235f6afb2b4b030db15347d5d2201
     Befehl_update = ["update", "reload", "msg", "#u"]
     Befehl_send = ["send", "an", "to", "#s"]
     Befehl_close = ["close", "exit", "taskkill", "#c"]
@@ -220,10 +195,7 @@ running = True
 nachrichten = []
 user_online = []
 list_log = []
-<<<<<<< HEAD
 user_pk = {}
-=======
->>>>>>> 23f6a5146c0235f6afb2b4b030db15347d5d2201
 
 if __name__ == "__main__":
 
@@ -245,12 +217,7 @@ if __name__ == "__main__":
 
     #set name
     Name = ""
-<<<<<<< HEAD
     while True:
-=======
-    err = False
-    while len(Name) < 1:
->>>>>>> 23f6a5146c0235f6afb2b4b030db15347d5d2201
         try:
             clear()
             Name = input("Name: ")
