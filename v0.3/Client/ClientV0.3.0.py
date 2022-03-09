@@ -87,9 +87,8 @@ def Send(msg, key):
 def Update():
     global nachrichten
 
-    print(len(nachrichten), "neue Nachrichten")
-
     if len(nachrichten) > 0:
+        print(len(nachrichten), "neue Nachrichten")
         for msg in nachrichten:
             print(msg)
         nachrichten = []
