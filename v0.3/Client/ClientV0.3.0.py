@@ -1,26 +1,40 @@
-import socket
-import threading
-import os
 from time import sleep
+import threading
 import Cipher
+import socket
+import os
 
 class Read_Thread(threading.Thread):
     global nachrichten
     global running
     global key_server
     global key_client
-
+ 
     def __init__(self, socket):
         threading.Thread.__init__(self)
         self.socket = socket
+
 
     def run(self):
         global running
 
         while running:
-            try:
-                Sender = self.Read(key_server)
+            #try:
+            Sender = self.Read(key_server)
+            if len(Sender) == 0:
+                continue
 
+<<<<<<< HEAD
+            if Sender == "Server":
+                recv = self.Read(key_server).split(" ")
+                self.Server(recv)
+                continue
+            if Sender in user_online:
+                recv = self.Read(key_client).split(" ")
+                msg = " ".join(recv)
+                nachrichten.append(f"von {Sender}: " + msg)
+                list_log.append(f"von {Sender}: " + msg)
+=======
                 if len(Sender) > 0:
                     if Sender == "Server":
                         recv = self.Read(key_server).split(" ")
@@ -30,15 +44,15 @@ class Read_Thread(threading.Thread):
                         msg = " ".join(recv)
                         nachrichten.append(f"von {Sender}: " + msg)
                         list_log.append(f"von {Sender}: " + msg)
+>>>>>>> 23f6a5146c0235f6afb2b4b030db15347d5d2201
 
-            except Exception as e:
-                running = False
-                print("\n\nThread wurde Abgebrochen\nexcept: "+str(e))
+            #except Exception as e:
+            #    running = False
+            #    print("\n\nThread wurde Abgebrochen\nexcept: "+str(e))
 
     def Server(self, command):
         global running
         global user_online
-
         if command[0] == "#C" and running == False:
             client_socket.close()
             print("die Verbindung wurde geschlossen", end="")
@@ -47,11 +61,14 @@ class Read_Thread(threading.Thread):
         elif command[0] == "#O":
             recv = command[1]
             user = command[2]
+            pk = command[3]
+            pk = self.int_to_bytes(int(pk))
 
             if recv == "-" and user in user_online:
                 user_online.remove(user)
             elif recv == "+" and user not in user_online:
                 user_online.append(user)
+                user_pk[user] = pk
 
         else:
             print("ein nicht gültiger Befehl vom Server ist gekommen")
@@ -63,6 +80,12 @@ class Read_Thread(threading.Thread):
         sleep(0.1)
 
         return recv
+
+    def bytes_to_int(self, xbytes: bytes) -> int:
+        return int.from_bytes(xbytes, "little")
+
+    def int_to_bytes(self, x: int) -> bytes:
+        return x.to_bytes((x.bit_length() + 7) // 8, "little")
 
 def Read(key):
     recv = client_socket.recv(4096)
@@ -87,13 +110,24 @@ def Send(msg, key):
 def Update():
     global nachrichten
 
+<<<<<<< HEAD
+    if len(nachrichten) == 0:
+=======
     if len(nachrichten) > 0:
         print(len(nachrichten), "neue Nachrichten")
         for msg in nachrichten:
             print(msg)
         nachrichten = []
     else:
+>>>>>>> 23f6a5146c0235f6afb2b4b030db15347d5d2201
         print("Keine neuen Nachichten bekommen")
+        return
+
+    print(len(nachrichten), "neue Nachrichten")
+    for msg in nachrichten:
+        print(msg)
+
+    nachrichten = []
 
 def Send_to_client(Empfänger, msg):
     global client_socket
@@ -102,12 +136,17 @@ def Send_to_client(Empfänger, msg):
 
     msg = msg.strip()
 
-    if len(msg) > 0:
-        Send(Empfänger, key_server)
-        Send(msg, key_client)
-        print("Nachicht wurde gesendet")
-    else:
+    if len(msg) < 1:
         print("Die Nachicht hat kein Inhalt")
+        return
+
+    if Empfänger not in user_online:
+        print(f"Der Nutzer '{Empfänger}' existiert nicht")
+        return
+
+    Send(Empfänger, key_server)
+    Send(msg, key_client)
+    print("Nachicht wurde gesendet")
 
 def close():
     global running
@@ -119,6 +158,7 @@ def close():
     running = False
 
 def online():
+    #
     l = ""
     for user in user_online:
         l += user+", "
@@ -130,6 +170,17 @@ def clear():
 def log():
     global list_log
 
+<<<<<<< HEAD
+    if len(list_log) < 1:
+        print("Keine neuen Nachichten bekommen")
+        return
+
+    print(len(list_log), "Nachrichten")
+    for msg in list_log:
+        print(msg)
+
+def switch(Befehl,parameter1 = "", parameter2 = ""):
+=======
     if len(list_log) > 0:
         print(len(list_log), "Nachrichten")
         for msg in list_log:
@@ -138,6 +189,7 @@ def log():
         print("Keine neuen Nachichten bekommen")
 
 def switch(Befehl, parameter1 = "", parameter2 = ""):
+>>>>>>> 23f6a5146c0235f6afb2b4b030db15347d5d2201
     Befehl_update = ["update", "reload", "msg", "#u"]
     Befehl_send = ["send", "an", "to", "#s"]
     Befehl_close = ["close", "exit", "taskkill", "#c"]
@@ -168,6 +220,10 @@ running = True
 nachrichten = []
 user_online = []
 list_log = []
+<<<<<<< HEAD
+user_pk = {}
+=======
+>>>>>>> 23f6a5146c0235f6afb2b4b030db15347d5d2201
 
 if __name__ == "__main__":
 
@@ -189,20 +245,27 @@ if __name__ == "__main__":
 
     #set name
     Name = ""
+<<<<<<< HEAD
+    while True:
+=======
     err = False
     while len(Name) < 1:
+>>>>>>> 23f6a5146c0235f6afb2b4b030db15347d5d2201
         try:
             clear()
             Name = input("Name: ")
         except:
+            continue
             pass
         if Name == "Server" or " " in Name:
             Name = ""
-        else:
-            Send(Name, key_server)
-            recv = Read(key_server)
-            if recv != " ":
-                Name = ""
+            continue
+
+        Send(Name, key_server)
+        recv = Read(key_server)
+
+        if recv == " ":
+            break
 
     t = Read_Thread(client_socket)
     t.start()
@@ -211,15 +274,18 @@ if __name__ == "__main__":
     while running == True:
         try:
             msg = input(">>> ")
-            if " " in msg:
-                msg = msg.split(" ")
-                Befehl = msg[0]
-                msg.pop(0)
-                Empfänger = msg[0]
-                msg.pop(0)
-                msg = " ".join(msg)
-                switch(Befehl=Befehl.lower(), parameter1=Empfänger, parameter2=msg)
-            else:
+
+            if " " not in msg:
                 switch(Befehl=msg.lower().strip())
+                continue
+
+            msg = msg.split(" ")
+            Befehl = msg[0]
+            msg.pop(0)
+            Empfänger = msg[0]
+            msg.pop(0)
+            msg = " ".join(msg)
+            switch(Befehl=Befehl.lower(), parameter1=Empfänger, parameter2=msg)
+
         except :
             print("Es gab ein Fehler bei dem Input")

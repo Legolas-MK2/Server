@@ -14,6 +14,7 @@ class client(threading.Thread):
         self.Name = ""
         self.running = True
         self.key = b''
+        self.pk = b''
 
     def Send(self, msg, crypt=True):
         sleep(0.1)
@@ -41,34 +42,48 @@ class client(threading.Thread):
         print(f"Der Thread vom Client {self.Name if len(self.Name)> 0 else self.ID} hat sich geschlossen")
 
     def set_key(self):
-        client_pk = self.Read(False)
+        self.pk = self.Read(False)
         self.key = Cipher.generate_key(20)
-        msg = Cipher.RSA_encrypt(client_pk, self.key)
+        msg = Cipher.RSA_encrypt(self.pk, self.key)
         self.Send(msg, False)
 
     def set_name(self):
         while len(self.Name) < 1:
+            print(1)
             recv = self.Read()
+            print(2)
             found_name = False
-
-            if len(ID_list) > 0:
-
-                for s in ID_list:
-                    if ID_list[s].Name == recv:
-                        found_name = True
-
-                if found_name:
-                    self.Send("e")
-                    recv = ""
-                else:
-                    self.Send(" ")
-
-            else:
+            print(3)
+            if len(ID_list) == 1:
+                print(4)
                 self.Send(" ")
-            self.Name = recv
+                print(5)
+                print(recv)
+                self.Name = recv
+                print(len(self.Name))
+                print(len(self.Name) < 1)
+                print(6)
+                print(f"Der Nutzer {self.Name} hat sich eingeloggt und hat die ID {self.ID} bekommen")
+                self.add_to_onlinelist(self.Name)
+                return
+            print(7)
+            for s in ID_list:
+                print(8)
+                if ID_list[s].Name == recv:
+                    print(9)
+                    found_name = True
+            print(10)
+            if found_name:
+                print(11)
+                self.Send("e")
+                print(12)
+                recv = ""
+            else:
+                print(13)
+                self.Send(" ")
+            print(14)
+        print(15)
 
-        print(f"Der Nutzer {self.Name} hat sich eingeloggt und hat die ID {self.ID} bekommen")
-        self.add_to_onlinelist(self.Name)
 
         for s in ID_list:
             try:
@@ -76,6 +91,7 @@ class client(threading.Thread):
                 self.Send("#O + " + ID_list[s].Name)
             except:
                 pass
+
     def Read(self,crypt = True):
         recv = self.Socket.recv(4096)
 
@@ -109,26 +125,33 @@ class client(threading.Thread):
         if Empfänger_name == "Server":
             msg = self.Read()
             self.ask_Server(msg)
+<<<<<<< HEAD
+            return
+
+        msg = self.Read(False)
+        exist = False
+=======
         else:
             msg = self.Read(False)
+>>>>>>> 23f6a5146c0235f6afb2b4b030db15347d5d2201
 
-            if len(msg) > 0:
-                user_exist = False
+        if len(msg) == 0:
+            return
 
-                for s in ID_list:
-                    if ID_list[s].Name == Empfänger_name:
-                        Empfänger_ID = s
-                        user_exist = True
-                        break
+        for s in ID_list:
+            if ID_list[s].Name == Empfänger_name:
+                Empfänger_ID = s
+                exist = True
+                break
 
-                if user_exist:
-                    print(f"{self.Name} --> {Empfänger_name}")
-                    print("msg ->", msg)
+        if not exist:
+            print(f"Der Client {Empfänger_name} existiert nicht")
+            return
 
-                    ID_list[Empfänger_ID].Send(self.Name)
-                    ID_list[Empfänger_ID].Send(msg, False)
-                else:
-                    print(f"Der Client {Empfänger_name} existiert nicht")
+        print(f"{self.Name} --> {Empfänger_name}")
+        print("msg ->", msg)
+        ID_list[Empfänger_ID].Send(self.Name)
+        ID_list[Empfänger_ID].Send(msg, False)
 
     def add_to_onlinelist(self, name):
         global ID_list
@@ -136,8 +159,9 @@ class client(threading.Thread):
         for s in ID_list:
             try:
                 if name != ID_list[s]:
+                    key = str(self.bytes_to_int(self.pk))
                     ID_list[s].Send("Server")
-                    ID_list[s].Send("#O + " + name)
+                    ID_list[s].Send("#O + "+ name + " " + key)
             except:
                 pass
 
@@ -150,6 +174,12 @@ class client(threading.Thread):
                 ID_list[s].Send("#O - " + name)
             except:
                 pass
+
+    def bytes_to_int(self, xbytes: bytes) -> int:
+        return int.from_bytes(xbytes, "little")
+
+    def int_to_bytes(self, x: int) -> bytes:
+        return x.to_bytes((x.bit_length() + 7) // 8, "little")
 
 ID_list = {}
 
