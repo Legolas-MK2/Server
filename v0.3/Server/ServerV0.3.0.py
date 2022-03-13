@@ -49,46 +49,64 @@ class client(threading.Thread):
 
     def set_name(self):
         while len(self.Name) < 1:
-            print(1)
-            recv = self.Read()
-            print(2)
-            found_name = False
-            print(3)
+            self.Name = self.Read()
+
             if len(ID_list) == 1:
-                print(4)
-                self.Send(" ")
-                print(5)
-                print(recv)
-                self.Name = recv
-                print(len(self.Name))
-                print(len(self.Name) < 1)
-                print(6)
-                print(f"Der Nutzer {self.Name} hat sich eingeloggt und hat die ID {self.ID} bekommen")
-                self.add_to_onlinelist(self.Name)
-                return
-            print(7)
+                break
+
             for s in ID_list:
-                print(8)
-                if ID_list[s].Name == recv:
-                    print(9)
-                    found_name = True
-            print(10)
-            if found_name:
-                print(11)
-                self.Send("e")
-                print(12)
-                recv = ""
-            else:
-                print(13)
-                self.Send(" ")
-            print(14)
-        print(15)
+                if ID_list[s].Name == self.Name and ID_list[s].ID != self.ID:
+                    self.Send("e")
+                    self.Name = ""
+                    continue
 
-
+        self.Send(" ")
         for s in ID_list:
             try:
+                key = str(self.bytes_to_int(ID_list[s].pk))
                 self.Send("Server")
-                self.Send("#O + " + ID_list[s].Name)
+                self.Send("#O + " + ID_list[s].Name + " " + key)
+            except:
+                pass
+        self.add_to_onlinelist(self.Name)
+        print(f"Der Nutzer {self.Name} hat sich eingeloggt und hat die ID {self.ID} bekommen")
+
+    def set_nam(self):
+        while len(self.Name) < 1:
+            recv = self.Read()
+            found_name = False
+
+            if len(ID_list) == 1:
+                self.Send(" ")
+                self.Name = recv
+                self.add_to_onlinelist(self.Name)
+
+                for s in ID_list:
+                    try:
+                        key = str(self.bytes_to_int(ID_list[s].pk))
+                        self.Send("Server")
+                        self.Send("#O + " + ID_list[s].Name + " "+key)
+                    except:
+                        pass
+                return
+
+            for s in ID_list:
+                if ID_list[s].Name == recv:
+                    found_name = True
+
+            if found_name == False:
+                self.Send(" ")
+                return
+
+            self.Send("e")
+            recv = ""
+            print(f"Der Nutzer {self.Name} hat sich eingeloggt und hat die ID {self.ID} bekommen")
+        self.add_to_onlinelist(self.Name)
+        for s in ID_list:
+            try:
+                key = str(self.bytes_to_int(ID_list[s].pk))
+                self.Send("Server")
+                self.Send("#O + " + ID_list[s].Name,key)
             except:
                 pass
 
@@ -125,15 +143,10 @@ class client(threading.Thread):
         if Empfänger_name == "Server":
             msg = self.Read()
             self.ask_Server(msg)
-<<<<<<< HEAD
             return
 
         msg = self.Read(False)
         exist = False
-=======
-        else:
-            msg = self.Read(False)
->>>>>>> 23f6a5146c0235f6afb2b4b030db15347d5d2201
 
         if len(msg) == 0:
             return
@@ -156,17 +169,22 @@ class client(threading.Thread):
     def add_to_onlinelist(self, name):
         global ID_list
 
+        if len(name) < 1:
+            return
+
         for s in ID_list:
             try:
-                if name != ID_list[s]:
-                    key = str(self.bytes_to_int(self.pk))
-                    ID_list[s].Send("Server")
-                    ID_list[s].Send("#O + "+ name + " " + key)
+                key = str(self.bytes_to_int(self.pk))
+                ID_list[s].Send("Server")
+                ID_list[s].Send("#O + " + name + " " + key)
             except:
                 pass
 
     def sub_from_onlinelist(self, name):
         global ID_list
+
+        if len(name) < 1:
+            return
 
         for s in ID_list:
             try:
@@ -186,7 +204,7 @@ ID_list = {}
 if __name__ == '__main__':
     Nutzer_max = 10
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(("192.168.178.140", 5000))
+    server_socket.bind(("127.0.0.1", 5000))
     server_socket.listen(Nutzer_max)
 
     for i in range(0, Nutzer_max):
