@@ -21,17 +21,13 @@ KV = '''
 BoxLayout:
     orientation: 'vertical'
     padding: dp(5), dp(5)
-    
-    Button:
-        
-        text: "2"
-    
     RecycleView:
         id: rv
         data: app.messages
         viewclass: 'Message'
         do_scroll_x: False
         RecycleBoxLayout:
+            padding: dp(5), dp(30)
             id: box
             orientation: 'vertical'
             size_hint_y: None
@@ -73,14 +69,13 @@ BoxLayout:
 <Message@FloatLayout>:
     message_id: -1
     bg_color: '#223344'
-    side: 'left'
     text: ''
     size_hint_y: None
     _size: 0, 0
     size: self._size
     text_size: None, None
     opacity: min(1, self._size[0])
-    Label:
+    Button:
         text: root.text
         padding: 10, 10
         size_hint: None, 1
@@ -92,12 +87,7 @@ BoxLayout:
             self.texture_size,
             root.width,
             )
-        pos_hint:
-            (
-            {'x': 0, 'center_y': .5}
-            if root.side == 'left' else
-            {'right': 1, 'center_y': .5}
-            )
+        pos_hint:{'center_x': .5, 'center_y': .5}
         canvas.before:
             Color:
                 rgba: RGBA(root.bg_color)
@@ -119,12 +109,11 @@ class MessengerApp(App):
     def build(self):
         return Builder.load_string(KV)
 
-    def add_message(self, text, side, color):
+    def add_message(self, text, color):
         # create a message for the recycleview
         self.messages.append({
             'message_id': len(self.messages),
             'text': text,
-            'side': side,
             'bg_color': color,
             'text_size': [None, None],
         })
@@ -168,13 +157,14 @@ class MessengerApp(App):
         text = textinput.text
         textinput.text = ''
         if text != "":
-            self.add_message(text, 'right', '#223344')
+            self.add_message(text, '#223344')
             self.focus_textinput(textinput)
             Clock.schedule_once(lambda *args: self.answer(text), 1)
             self.scroll_bottom()
+            self.focus_textinput(textinput)
 
     def answer(self, text, *args):
-        self.add_message('Wäre praktisch', 'left', '#332211')
+        self.add_message('Wäre praktisch', '#332211')
 
     def scroll_bottom(self):
         rv = self.root.ids.rv
