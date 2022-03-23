@@ -3,92 +3,115 @@ import threading
 from time import sleep
 import Cipher
 #dawdwadawda
-def start():
+def start(ID,sock,a):
     global ID_list
 
-    def __init__(ID,sock):
+    def bytes_to_int(xbytes: bytes) -> int:
+        return int.from_bytes(xbytes, "little")
 
-        ID = ID
-        (Socket, addr ) = sock
-        Name = ""
-        key = b''
-        pk = b''
-
-    def run(self):
-        self.set_key()
-        self.set_name()
-        self.connect_to_all()
-
-    def Read(self, crypt=True):
-        recv = self.Socket.recv(4096)
+    def Read(crypt=True):
+        recv = Client.Socket.recv(4096)
 
         if crypt:
-            recv = Cipher.AES_decrypt_text(recv, self.key)
+            recv = Cipher.AES_decrypt_text(recv, Client.key)
             recv = str(recv, "utf-8")
         sleep(0.1)
         return recv
 
-    def Send(self, msg, crypt=True):
+    def Send( msg, crypt=True):
         sleep(0.1)
         if crypt:
             msg = bytes(msg, "utf-8")
-            msg = Cipher.AES_encrypt_text(msg, self.key)
+            print("key:", Client.key)
+            print("msg:", msg)
+            msg = Cipher.AES_encrypt_text(msg, Client.key)
 
-        self.Socket.send(msg)
+        Client.Socket.send(msg)
 
-    def set_key(self):
-        self.pk = self.Read(False)
-        self.key = Cipher.generate_key(20)
-        msg = Cipher.RSA_encrypt(self.pk, self.key)
-        self.pk = str(self.bytes_to_int(self.pk))
-        self.Send(msg, False)
+    def set_key():
+        Client.pk = Read(False)
+        Client.key = Cipher.generate_key(20)
+        msg = Cipher.RSA_encrypt(Client.pk, Client.key)
+        Client.pk = str(bytes_to_int(Client.pk))
+        Send(msg, False)
 
-    def set_name(self):
-        while len(self.Name) < 1:
-            self.Name = self.Read()
-
+    def set_name():
+        while len(Client.Name) < 1:
+            Client.Name = Read()
             if len(ID_list) == 1:
                 break
 
             for s in ID_list:
-                if ID_list[s].Name == self.Name and ID_list[s].ID != self.ID:
-                    self.Send("e")
-                    self.Name = ""
+                if ID_list[s].Name == Client.Name:
+                    Send("e")
+                    Client.Name = ""
                     continue
+        Send(" ")
 
-        self.Send(" ")
+        print(f"Der Nutzer {Client.Name} hat sich eingeloggt und hat die ID {ID} bekommen")
 
-        print(f"Der Nutzer {self.Name} hat sich eingeloggt und hat die ID {self.ID} bekommen")
-
-    def connect_to_all(self):
+    def connect_to_all():
         for client in ID_list:
-            if ID_list[client].Name != self.Name:
-                self.Send(ID_list[client].Name + " " + ID_list[client].pk)
-                recv = self.Read().split(" ")
+            if ID_list[client].Name != Client.Name:
+                Client.Send(ID_list[client].Name + " " + ID_list[client].pk)
+                recv = Client.Read().split(" ")
 
                 if ID_list[client].Name == recv[0]:
                     ID_list[client].Send("Server")
-                    ID_list[client].Send("#O + " + self.Name + " " + recv[1])
+                    ID_list[client].Send("#O + " + Client.Name + " " + recv[1])
                 else:
-                    print("Error: in connect_to_all\nID_list[client].Name =", ID_list[client].Name, "\nrecv[0] =",
-                          recv[0])
-        self.Send("e")
+                    print("Warning: in connect_to_all\nID_list[client].Name =", ID_list[client].Name, "\nrecv[0] =", recv[0])
+        Send("e")
 
+    def sub_from_onlinelist(name):
+        global ID_list
+
+        if len(name) < 1:
+            return
+
+        for s in ID_list:
+            try:
+                ID_list[s].Send("Server")
+                ID_list[s].Send("#O - " + name)
+            except:
+                pass
+
+    try:
+        print("ID_list.len =", len(ID_list))
+        Client = client()
+        Client.Socket = sock
+        Client.ID = ID
+        set_key()
+        set_name()
+        connect_to_all()
+        ID_list[ID] = Client
+        ID_list[ID].start()
+        print("ID_list.len =", len(ID_list))
+    except:
+        print(1)
+        print(f"die Verbindung zu dem Client {Client.Name if len(Client.Name) > 0 else ID} wurde verloren")
+        temp.pop(ID)
+        if len(Client.Name) >= 1:
+            sub_from_onlinelist(Client.Name)
 
 class client(threading.Thread):
     global ID_list
-
-    def __init__(self, ID,sock):
+    global temp
+    def __init__(self):
         threading.Thread.__init__(self)
 
-        self.ID = ID
-        (self.Socket, self.addr) = sock
+        self.ID = None
+        self.Socket = None
+        self.addr = None
         self.Name = ""
         self.running = False
-        self.key = b''
-        self.pk = b''
+        self.key = None
+        self.pk = None
 
-    def Read(self, crypt = True):
+    def Read(self, crypt=True):
+        if not self.running:
+            return " "
+
         recv = self.Socket.recv(4096)
 
         if crypt:
@@ -96,7 +119,6 @@ class client(threading.Thread):
             recv = str(recv, "utf-8")
 
         sleep(0.1)
-
         return recv
 
     def Send(self, msg, crypt=True):
@@ -108,33 +130,22 @@ class client(threading.Thread):
         self.Socket.send(msg)
     def run(self):
         try:
-            self.set_key()
-            self.set_name()
-            self.connect_to_all()
-
             self.running = True
             while self.running:
                 recv = self.Read()
                 self.data_Transfer(recv)
         except:
+            print(4)
             print(f"die Verbindung zu dem Client {self.Name if len(self.Name)> 0 else self.ID} wurde verloren")
 
             self.running = False
             self.sub_from_onlinelist(self.Name)
             ID_list.pop(self.ID)
+            temp.pop(self.ID)
 
         print(f"Der Thread vom Client {self.Name if len(self.Name)> 0 else self.ID} hat sich geschlossen")
 
-    def Read(self, crypt = True):
-        recv = self.Socket.recv(4096)
 
-        if crypt:
-            recv = Cipher.AES_decrypt_text(recv, self.key)
-            recv = str(recv, "utf-8")
-
-        sleep(0.1)
-
-        return recv
 
     def ask_Server(self, parameter):
         if parameter == '#C':
@@ -148,6 +159,7 @@ class client(threading.Thread):
 
             print(f"Der Client {self.Name} wurde geschlossen")
             ID_list.pop(self.ID)
+            temp.pop(self.ID)
 
         elif parameter == "#O":
             pass
@@ -216,20 +228,21 @@ class client(threading.Thread):
     def int_to_bytes(self, x: int) -> bytes:
         return x.to_bytes((x.bit_length() + 7) // 8, "little")
 
+temp = {}
 ID_list = {}
 
 if __name__ == '__main__':
     Nutzer_max = 10
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(("127.0.0.1", 5001))
+    server_socket.bind(("127.0.0.1", 5000))
     server_socket.listen(Nutzer_max)
 
     for i in range(0, Nutzer_max):
         try:
             print("Warte auf neue Verbindung...")
-
-            ID_list[i] = client(i, server_socket.accept())
-            ID_list[i].start()
+            (sock, addr) = server_socket.accept()
+            temp[i] = threading.Thread(target=start, args=(i, sock, addr))
+            temp[i].start()
         except:
             print("ein Problem mit dem aktzeptieren")
 

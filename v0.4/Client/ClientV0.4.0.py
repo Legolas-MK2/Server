@@ -3,7 +3,7 @@ import threading
 import Cipher
 import socket
 import os
-
+import sys
 class Read_Thread(threading.Thread):
     global nachrichten
     global running
@@ -23,36 +23,33 @@ class Read_Thread(threading.Thread):
 
         start = True
         while running:
-            try:
-                Sender = self.Read(key_server)
+            #try:
+            Sender = self.Read(key_server)
 
-                if len(Sender) == 0:
-                    continue
+            if len(Sender) == 0:
+                continue
 
-                if Sender == "Server":
-                    recv = self.Read(key_server).split(" ")
-                    self.Server(recv)
-                    continue
+            if Sender == "Server":
+                recv = self.Read(key_server).split(" ")
+                self.Server(recv)
+                continue
 
-                for user in users.items():
-                    if Sender in user[0]:
-                        recv = self.Read(key_client).split(" ")
-                        msg = " ".join(recv)
+            for user in users.items():
+                if Sender in user[0]:
+                    recv = self.Read(key_client).split(" ")
+                    msg = " ".join(recv)
 
-                        nachrichten.append(f"von {Sender}: " + msg)
-                        list_log.append(f"von {Sender}: " + msg)
+                    nachrichten.append(f"von {Sender}: " + msg)
+                    list_log.append(f"von {Sender}: " + msg)
 
-            except Exception as e:
-                running = False
-                print("\n\nThread wurde Abgebrochen\nexcept: "+str(e))
+            #except Exception as e:
+            #    running = False
+            #    print("\n\nThread wurde Abgebrochen\nexcept: "+str(e))
 
     def set_keys(self):
         users[Name] = Cipher.generate_key(20)
         while True:
             recv = self.Read(key_server)
-            if recv == "Server":
-                self.Read(key_server)
-                recv = self.Read(key_server)
             if recv == "e":
                 return
             recv = recv.split(" ")
@@ -73,7 +70,7 @@ class Read_Thread(threading.Thread):
         if command[0] == "#C" and running == False:
             client_socket.close()
             print("Die Verbindung wurde geschlossen")
-            exit()
+            sys.exit()
 
         elif command[0] == "#O":
             mode = command[1]
@@ -98,8 +95,9 @@ class Read_Thread(threading.Thread):
             print("Error: kein inhalt")
         if key != "":
             recv = Cipher.AES_decrypt_text(recv, key)
+            print("key", key)
+            print("recv", recv)
             recv = str(recv, "utf-8")
-        sleep(0.1)
         return recv
 
     def bytes_to_int(self, xbytes: bytes) -> int:
@@ -158,14 +156,13 @@ def Send_to_client(Empfänger, msg):
 
 def close():
     global running
-    global client_socket
 
     print("Die Verbindung wird geschlossen")
     running = False
     Send("Server", key_server)
     Send("#C", key_server)
     sleep(5)
-    exit()
+    sys.exit()
 
 def online():
     l = ""
@@ -229,7 +226,7 @@ def connect():
     try_connect = True
     while try_connect:
         try:
-            client_socket.connect(("127.0.0.1", 5001))
+            client_socket.connect(("127.0.0.1", 5000))
             try_connect = False
         except:
             print("Kein Server gefunden")
