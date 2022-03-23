@@ -172,7 +172,20 @@ def log():
     for msg in list_log:
         print(msg)
 
+def help():
+    print("""Vielen Dank dass sie sich für den Hilfecommand Entschieden haben. Wir wünschen ihnen einen schönen Tag noch mit den folgenden Commands :)
+        Nachrichten senden          --> send [Empfänger] Nachricht
+        Nachrichten anschauen       --> update, msg
+        Löschende Nachriten an/aus  --> log
+        Erreichbare Clients sehen   --> online
+        
+        Bildschirm säubern          --> cls
+        Client schließen            --> close
+        
+        Hilfe (das hier) anzeigen   --> help """)
+
 def switch(Befehl, parameter1 = "", parameter2 = ""):
+    Befehl_help = ["help", "hilfe", "bitte_helfen_sie_mir_ich_bin_in_gefahr_bitte_helfen_sie_mir"]
     Befehl_update = ["update", "reload", "msg", "#u"]
     Befehl_send = ["send", "an", "to", "#s"]
     Befehl_close = ["close", "exit", "taskkill", "#c"]
@@ -192,6 +205,8 @@ def switch(Befehl, parameter1 = "", parameter2 = ""):
         online()
     elif Befehl in Befehl_log:
         log()
+    elif Befehl in Befehl_help:
+        help()
     else:
         print(f"Der Befehl {Befehl} ist entweder falsch geschrieben oder konnte nicht gefunden werden.")
 
