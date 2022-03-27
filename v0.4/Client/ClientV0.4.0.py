@@ -4,6 +4,19 @@ import Cipher
 import socket
 import os
 import sys
+
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
 class Read_Thread(threading.Thread):
     global nachrichten
     global running
@@ -18,33 +31,32 @@ class Read_Thread(threading.Thread):
     def run(self):
         global running
         global start
-
         self.set_keys()
 
         start = True
         while running:
-            #try:
-            Sender = self.Read(key_server)
+            try:
+                Sender = self.Read(key_server)
 
-            if len(Sender) == 0:
-                continue
+                if len(Sender) == 0:
+                    continue
 
-            if Sender == "Server":
-                recv = self.Read(key_server).split(" ")
-                self.Server(recv)
-                continue
+                if Sender == "Server":
+                    recv = self.Read(key_server).split(" ")
+                    self.Server(recv)
+                    continue
 
-            for user in users.items():
-                if Sender in user[0]:
-                    recv = self.Read(key_client).split(" ")
-                    msg = " ".join(recv)
+                for user in users.items():
+                    if Sender in user[0]:
+                        recv = self.Read(key_client).split(" ")
+                        msg = " ".join(recv)
 
-                    nachrichten.append(f"von {Sender}: " + msg)
-                    list_log.append(f"von {Sender}: " + msg)
+                        nachrichten.append(f"von {Sender}: " + msg)
+                        list_log.append(f"von {Sender}: " + msg)
 
-            #except Exception as e:
-            #    running = False
-            #    print("\n\nThread wurde Abgebrochen\nexcept: "+str(e))
+            except Exception as e:
+                running = False
+                print("\n\nThread wurde Abgebrochen\nexcept: "+str(e))
 
     def set_keys(self):
         users[Name] = Cipher.generate_key(20)
@@ -56,11 +68,10 @@ class Read_Thread(threading.Thread):
             name = recv[0]
             pk = recv[1]
             pk = self.int_to_bytes(int(pk))
-            key = Cipher.generate_key(20)
-            key = Cipher.RSA_encrypt(pk, key)
+            bkey = Cipher.generate_key(20)
+            key = Cipher.RSA_encrypt(pk, bkey)
             key = str(self.bytes_to_int(key))
-
-            users[name] = key
+            users[name] = bkey
 
             Send(f"{name} {key}", key_server)
 
@@ -91,13 +102,11 @@ class Read_Thread(threading.Thread):
 
     def Read(self, key):
         recv = client_socket.recv(4096)
-        if recv == b"":
-            print("Error: kein inhalt")
+
         if key != "":
             recv = Cipher.AES_decrypt_text(recv, key)
-            print("key", key)
-            print("recv", recv)
             recv = str(recv, "utf-8")
+
         return recv
 
     def bytes_to_int(self, xbytes: bytes) -> int:
@@ -108,10 +117,12 @@ class Read_Thread(threading.Thread):
 
 def Read(key):
     recv = client_socket.recv(4096)
+
     if key != None:
         recv = Cipher.AES_decrypt_text(recv, key)
         recv = str(recv, "utf-8")
     sleep(0.1)
+
     return recv
 
 def Send(msg, key):
@@ -148,7 +159,7 @@ def Send_to_client(Empfänger, msg):
 
     for a, b in users.items():
         if a == Empfänger:
-            Send(Empfänger, key_server)
+            Send(Empfänger, users[Empfänger])
             Send(msg, key_client)
             print("Nachicht wurde gesendet")
             return
@@ -157,7 +168,7 @@ def Send_to_client(Empfänger, msg):
 def close():
     global running
 
-    print("Die Verbindung wird geschlossen")
+    print("Verbindung wird geschlossen")
     running = False
     Send("Server", key_server)
     Send("#C", key_server)
@@ -300,6 +311,6 @@ if __name__ == "__main__":
     t = Read_Thread(client_socket)
     t.start()
 
-    while start == False:
-        pass
+    #while start == False:
+    #    pass
     main()
