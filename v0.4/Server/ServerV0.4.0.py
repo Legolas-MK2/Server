@@ -3,27 +3,37 @@ import threading
 from time import sleep
 import Cipher
 #dawdwadawda
-def start(ID,sock,a):
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    END = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+def start(ID,sock,addr):
     global ID_list
 
     def bytes_to_int(xbytes: bytes) -> int:
         return int.from_bytes(xbytes, "little")
 
     def Read(crypt=True):
+        sleep(0.1)
         recv = Client.Socket.recv(4096)
 
         if crypt:
             recv = Cipher.AES_decrypt_text(recv, Client.key)
             recv = str(recv, "utf-8")
-        sleep(0.1)
         return recv
 
-    def Send( msg, crypt=True):
+    def Send(msg, crypt=True):
         sleep(0.1)
         if crypt:
             msg = bytes(msg, "utf-8")
-            print("key:", Client.key)
-            print("msg:", msg)
             msg = Cipher.AES_encrypt_text(msg, Client.key)
 
         Client.Socket.send(msg)
@@ -32,7 +42,6 @@ def start(ID,sock,a):
         Client.pk = Read(False)
         Client.key = Cipher.generate_key(20)
         msg = Cipher.RSA_encrypt(Client.pk, Client.key)
-        Client.pk = str(bytes_to_int(Client.pk))
         Send(msg, False)
 
     def set_name():
@@ -52,15 +61,18 @@ def start(ID,sock,a):
 
     def connect_to_all():
         for client in ID_list:
+
             if ID_list[client].Name != Client.Name:
-                Client.Send(ID_list[client].Name + " " + ID_list[client].pk)
-                recv = Client.Read().split(" ")
+                pk = bytes_to_int(ID_list[client].pk)
+                pk = str(pk)
+                Client.Send(ID_list[client].Name + " " + pk)
+                recv = Read().split(" ")
 
                 if ID_list[client].Name == recv[0]:
                     ID_list[client].Send("Server")
                     ID_list[client].Send("#O + " + Client.Name + " " + recv[1])
                 else:
-                    print("Warning: in connect_to_all\nID_list[client].Name =", ID_list[client].Name, "\nrecv[0] =", recv[0])
+                    print(f"{bcolors.WARNING}Warning: in connect_to_all\nID_list[client].Name ='{ID_list[client].Name}'\nrecv[0] ='{recv[0]}'{bcolors.END}")
         Send("e")
 
     def sub_from_onlinelist(name):
@@ -77,22 +89,20 @@ def start(ID,sock,a):
                 pass
 
     try:
-        print("ID_list.len =", len(ID_list))
         Client = client()
         Client.Socket = sock
         Client.ID = ID
+
         set_key()
         set_name()
         connect_to_all()
+
         ID_list[ID] = Client
         ID_list[ID].start()
-        print("ID_list.len =", len(ID_list))
     except:
-        print(1)
         print(f"die Verbindung zu dem Client {Client.Name if len(Client.Name) > 0 else ID} wurde verloren")
         temp.pop(ID)
-        if len(Client.Name) >= 1:
-            sub_from_onlinelist(Client.Name)
+        sub_from_onlinelist(Client.Name)
 
 class client(threading.Thread):
     global ID_list
@@ -109,8 +119,6 @@ class client(threading.Thread):
         self.pk = None
 
     def Read(self, crypt=True):
-        if not self.running:
-            return " "
 
         recv = self.Socket.recv(4096)
 
@@ -135,17 +143,15 @@ class client(threading.Thread):
                 recv = self.Read()
                 self.data_Transfer(recv)
         except:
-            print(4)
             print(f"die Verbindung zu dem Client {self.Name if len(self.Name)> 0 else self.ID} wurde verloren")
 
             self.running = False
             self.sub_from_onlinelist(self.Name)
             ID_list.pop(self.ID)
-            temp.pop(self.ID)
+            if temp[self.ID]:
+                temp.pop(self.ID)
 
         print(f"Der Thread vom Client {self.Name if len(self.Name)> 0 else self.ID} hat sich geschlossen")
-
-
 
     def ask_Server(self, parameter):
         if parameter == '#C':
