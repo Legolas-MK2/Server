@@ -37,7 +37,7 @@ class Read_Thread(threading.Thread):
         while running:
             try:
                 Sender = self.Read(key_server)
-
+                print("Sender:", Sender)
                 if len(Sender) == 0:
                     continue
 
@@ -48,7 +48,7 @@ class Read_Thread(threading.Thread):
 
                 for user in users.items():
                     if Sender in user[0]:
-                        recv = self.Read(key_client).split(" ")
+                        recv = self.Read(users[user]).split(" ")
                         msg = " ".join(recv)
 
                         nachrichten.append(f"von {Sender}: " + msg)
@@ -74,7 +74,6 @@ class Read_Thread(threading.Thread):
             users[name] = bkey
 
             Send(f"{name} {key}", key_server)
-
 
     def Server(self, command):
         global running
@@ -102,11 +101,15 @@ class Read_Thread(threading.Thread):
 
     def Read(self, key):
         recv = client_socket.recv(4096)
-
+        print("\nRead:")
+        print("key:", key)
+        print("recv1:", recv)
         if key != "":
             recv = Cipher.AES_decrypt_text(recv, key)
+            print("recv2:", recv)
             recv = str(recv, "utf-8")
-
+            print("recv3", recv)
+        print("\n")
         return recv
 
     def bytes_to_int(self, xbytes: bytes) -> int:
@@ -128,9 +131,14 @@ def Read(key):
 def Send(msg, key):
     global client_socket
 
+    print("\nSend:")
+    print("key:", key)
+    print("msg1:", msg)
     if key != None:
         msg = bytes(msg, "utf-8")
+        print("msg2:", msg)
         msg = Cipher.AES_encrypt_text(msg, key)
+    print("msg3:", msg)
 
     client_socket.send(msg)
     sleep(0.1)
@@ -159,8 +167,8 @@ def Send_to_client(Empfänger, msg):
 
     for a, b in users.items():
         if a == Empfänger:
-            Send(Empfänger, users[Empfänger])
-            Send(msg, key_client)
+            Send(Empfänger, key_server)
+            Send(msg,  users[Empfänger])
             print("Nachicht wurde gesendet")
             return
     print("Client nicht gefunden")
@@ -180,7 +188,8 @@ def online():
     for user in users.items():
         l += user[0]+", "
     print(l[:-2])
-
+    for user, key in users.items():
+        print(f"{user} --> {key}")
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -270,24 +279,24 @@ def set_name():
 
 def main():
     while running == True:
-        try:
-            msg = input(">>> ")
+        #try:
+        msg = input(">>> ")
 
-            if " " not in msg:
-                switch(Befehl=msg.lower().strip())
-                continue
+        if " " not in msg:
+            switch(Befehl=msg.lower().strip())
+            continue
 
-            msg = msg.split(" ")
-            Befehl = msg[0]
-            msg.pop(0)
-            Empfänger = msg[0]
-            msg.pop(0)
-            msg = " ".join(msg)
-            switch(Befehl=Befehl.lower(), parameter1=Empfänger, parameter2=msg)
+        msg = msg.split(" ")
+        Befehl = msg[0]
+        msg.pop(0)
+        Empfänger = msg[0]
+        msg.pop(0)
+        msg = " ".join(msg)
+        switch(Befehl=Befehl.lower(), parameter1=Empfänger, parameter2=msg)
 
-        except :
-            if running == True:
-                print("Es gab ein Fehler bei dem Input")
+        #except :
+        #    if running == True:
+        #        print("Es gab ein Fehler bei dem Input")
 
 #Global Variable
 key_client = b'\x9c\x98l0\xe4\xddPJ\xd5\x96\xfb\x83\xb9\x08\xb4\x1e'

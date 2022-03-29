@@ -63,11 +63,12 @@ def start(ID,sock,addr):
         for client in ID_list:
 
             if ID_list[client].Name != Client.Name:
+
                 pk = bytes_to_int(ID_list[client].pk)
                 pk = str(pk)
+
                 Client.Send(ID_list[client].Name + " " + pk)
                 recv = Read().split(" ")
-
                 if ID_list[client].Name == recv[0]:
                     ID_list[client].Send("Server")
                     ID_list[client].Send("#O + " + Client.Name + " " + recv[1])
@@ -121,19 +122,27 @@ class client(threading.Thread):
     def Read(self, crypt=True):
 
         recv = self.Socket.recv(4096)
-
+        print("\nRead:")
+        print("recv1:", recv)
         if crypt:
             recv = Cipher.AES_decrypt_text(recv, self.key)
+            print("recv2:", recv)
             recv = str(recv, "utf-8")
+        print("recv3:", recv)
+        print("\n")
 
         sleep(0.1)
         return recv
 
     def Send(self, msg, crypt=True):
         sleep(0.1)
+        print("\nSend:")
+        print("msg1:", msg)
         if crypt:
             msg = bytes(msg, "utf-8")
+            print("msg2:", msg)
             msg = Cipher.AES_encrypt_text(msg, self.key)
+        print("msg3:", msg)
 
         self.Socket.send(msg)
     def run(self):
