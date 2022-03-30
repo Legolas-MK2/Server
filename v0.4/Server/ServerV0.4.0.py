@@ -57,7 +57,7 @@ def start(ID,sock,addr):
                     continue
         Send(" ")
 
-        print(f"Der Nutzer {Client.Name} hat sich eingeloggt und hat die ID {ID} bekommen")
+        print(f"{bcolors.OKGREEN}Der Nutzer {Client.Name} hat sich eingeloggt und hat die ID {ID} bekommen{bcolors.END}")
 
     def connect_to_all():
         for client in ID_list:
@@ -73,7 +73,9 @@ def start(ID,sock,addr):
                     ID_list[client].Send("Server")
                     ID_list[client].Send("#O + " + Client.Name + " " + recv[1])
                 else:
-                    print(f"{bcolors.WARNING}Warning: in connect_to_all\nID_list[client].Name ='{ID_list[client].Name}'\nrecv[0] ='{recv[0]}'{bcolors.END}")
+                    print(f"{bcolors.WARNING}Warning: in connect_to_all")
+                    print(f"ID_list[client].Name ='{ID_list[client].Name}'")
+                    print(f"recv[0] ='{recv[0]}'{bcolors.END}")
         Send("e")
 
     def sub_from_onlinelist(name):
@@ -89,22 +91,25 @@ def start(ID,sock,addr):
             except:
                 pass
 
-    try:
-        Client = client()
-        Client.Socket = sock
-        Client.ID = ID
+    Client = client()
+    def main():
+        try:
 
-        set_key()
-        set_name()
-        connect_to_all()
+            Client.Socket = sock
+            Client.ID = ID
 
-        ID_list[ID] = Client
-        ID_list[ID].start()
-    except:
-        print(f"die Verbindung zu dem Client {Client.Name if len(Client.Name) > 0 else ID} wurde verloren")
-        temp.pop(ID)
-        sub_from_onlinelist(Client.Name)
+            set_key()
+            set_name()
+            connect_to_all()
 
+            ID_list[ID] = Client
+            ID_list[ID].start()
+        except:
+            print(f"{bcolors.FAIL}die Verbindung zu dem Client {Client.Name if len(Client.Name) > 0 else ID} wurde verloren{bcolors.END}")
+            temp.pop(ID)
+            sub_from_onlinelist(Client.Name)
+
+    main()
 class client(threading.Thread):
     global ID_list
     global temp
@@ -122,27 +127,18 @@ class client(threading.Thread):
     def Read(self, crypt=True):
 
         recv = self.Socket.recv(4096)
-        print("\nRead:")
-        print("recv1:", recv)
         if crypt:
             recv = Cipher.AES_decrypt_text(recv, self.key)
-            print("recv2:", recv)
             recv = str(recv, "utf-8")
-        print("recv3:", recv)
-        print("\n")
 
         sleep(0.1)
         return recv
 
     def Send(self, msg, crypt=True):
         sleep(0.1)
-        print("\nSend:")
-        print("msg1:", msg)
         if crypt:
             msg = bytes(msg, "utf-8")
-            print("msg2:", msg)
             msg = Cipher.AES_encrypt_text(msg, self.key)
-        print("msg3:", msg)
 
         self.Socket.send(msg)
     def run(self):
@@ -152,7 +148,7 @@ class client(threading.Thread):
                 recv = self.Read()
                 self.data_Transfer(recv)
         except:
-            print(f"die Verbindung zu dem Client {self.Name if len(self.Name)> 0 else self.ID} wurde verloren")
+            print(f"{bcolors.FAIL}die Verbindung zu dem Client {self.Name if len(self.Name)> 0 else self.ID} wurde verloren{bcolors.END}")
 
             self.running = False
             self.sub_from_onlinelist(self.Name)
@@ -181,7 +177,7 @@ class client(threading.Thread):
         elif parameter == "#K":
             pass
         else:
-            print(f"Der Client {self.Name} hat versucht an den Server die Nachicht '{parameter}' zusenden ohne das der Server eine Antwort hat")
+            print(f"{bcolors.WARNING}Der Client {self.Name} hat versucht an den Server die Nachicht '{parameter}' zusenden ohne das der Server eine Antwort hat{bcolors.END}")
 
     def data_Transfer(self, Empfänger_Name):
         if Empfänger_Name == "Server":
@@ -202,7 +198,7 @@ class client(threading.Thread):
                 break
 
         if not exist:
-            print(f"Der Client {Empfänger_Name} existiert nicht")
+            print(f"{bcolors.WARNING}Der Client {Empfänger_Name} existiert nicht{bcolors.END}")
             return
 
         print(f"{self.Name} --> {Empfänger_Name}")
@@ -258,7 +254,8 @@ if __name__ == '__main__':
             (sock, addr) = server_socket.accept()
             temp[i] = threading.Thread(target=start, args=(i, sock, addr))
             temp[i].start()
+            print(bcolors.OKGREEN + "Ein neuer Client hat sich verbunden" + bcolors.END)
         except:
-            print("ein Problem mit dem aktzeptieren")
+            print(bcolors.WARNING + "ein Problem mit dem aktzeptieren" + bcolors.END)
 
-    print("\n\n die maximale Anzahl an Clients haben sich verbunden")
+    print(bcolors.WARNING + "\n\n die maximale Anzahl an Clients haben sich verbunden" + bcolors.END)

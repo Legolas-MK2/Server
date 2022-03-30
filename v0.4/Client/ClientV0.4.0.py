@@ -13,7 +13,7 @@ class bcolors:
     OKGREEN = '\033[92m'
     WARNING = '\033[93m'
     FAIL = '\033[91m'
-    ENDC = '\033[0m'
+    END = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
@@ -37,7 +37,6 @@ class Read_Thread(threading.Thread):
         while running:
             try:
                 Sender = self.Read(key_server)
-                print("Sender:", Sender)
                 if len(Sender) == 0:
                     continue
 
@@ -48,15 +47,16 @@ class Read_Thread(threading.Thread):
 
                 for user in users.items():
                     if Sender in user[0]:
-                        recv = self.Read(users[user]).split(" ")
+                        recv = self.Read(users[Sender])
+                        recv = recv.split(" ")
                         msg = " ".join(recv)
 
                         nachrichten.append(f"von {Sender}: " + msg)
-                        list_log.append(f"von {Sender}: " + msg)
+                        logs.append(f"von {Sender}: " + msg)
 
             except Exception as e:
                 running = False
-                print("\n\nThread wurde Abgebrochen\nexcept: "+str(e))
+                print(bcolors.FAIL + "\n\nThread wurde Abgebrochen\nexcept: "+str(e) + bcolors.END)
 
     def set_keys(self):
         users[Name] = Cipher.generate_key(20)
@@ -83,6 +83,7 @@ class Read_Thread(threading.Thread):
             sys.exit()
 
         elif command[0] == "#O":
+            global sk
             mode = command[1]
             user_name = command[2]
 
@@ -95,21 +96,16 @@ class Read_Thread(threading.Thread):
             elif mode == "+":
                 key = command[3]
                 key = self.int_to_bytes(int(key))
+                key = Cipher.RSA_decrypt(sk, key)
                 users[user_name] = key
             else:
-                print(command)
+                print(bcolors.WARNING + command + "Wurde vom Server gesendet ohne es zuverarbeiten" + bcolors.END)
 
     def Read(self, key):
         recv = client_socket.recv(4096)
-        print("\nRead:")
-        print("key:", key)
-        print("recv1:", recv)
         if key != "":
             recv = Cipher.AES_decrypt_text(recv, key)
-            print("recv2:", recv)
             recv = str(recv, "utf-8")
-            print("recv3", recv)
-        print("\n")
         return recv
 
     def bytes_to_int(self, xbytes: bytes) -> int:
@@ -131,14 +127,9 @@ def Read(key):
 def Send(msg, key):
     global client_socket
 
-    print("\nSend:")
-    print("key:", key)
-    print("msg1:", msg)
     if key != None:
         msg = bytes(msg, "utf-8")
-        print("msg2:", msg)
         msg = Cipher.AES_encrypt_text(msg, key)
-    print("msg3:", msg)
 
     client_socket.send(msg)
     sleep(0.1)
@@ -159,7 +150,7 @@ def Update():
 def Send_to_client(Empfänger, msg):
     global client_socket
     global key_server
-
+    global logs
     msg = msg.strip()
     if len(msg) < 1:
         print("Die Nachicht hat kein Inhalt")
@@ -170,8 +161,10 @@ def Send_to_client(Empfänger, msg):
             Send(Empfänger, key_server)
             Send(msg,  users[Empfänger])
             print("Nachicht wurde gesendet")
+            logs.append(f"an {Empfänger}: {msg}")
             return
-    print("Client nicht gefunden")
+
+    print(bcolors.WARNING + "Client nicht gefunden" + bcolors.END)
 
 def close():
     global running
@@ -188,20 +181,18 @@ def online():
     for user in users.items():
         l += user[0]+", "
     print(l[:-2])
-    for user, key in users.items():
-        print(f"{user} --> {key}")
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
 def log():
-    global list_log
+    global logs
 
-    if len(list_log) < 1:
+    if len(logs) < 1:
         print("Keine Nachichten bekommen")
         return
 
-    print(len(list_log), "Nachrichten")
-    for msg in list_log:
+    print(len(logs), "Nachrichten")
+    for msg in logs:
         print(msg)
 
 def help():
@@ -240,7 +231,7 @@ def switch(Befehl, parameter1 = "", parameter2 = ""):
     elif Befehl in Befehl_help:
         help()
     else:
-        print(f"Der Befehl {Befehl} ist entweder falsch geschrieben oder konnte nicht gefunden werden.")
+        print(f"{bcolors.WARNING}Der Befehl {Befehl} ist entweder falsch geschrieben oder konnte nicht gefunden werden.{bcolors.END}")
 
 def connect():
     try_connect = True
@@ -249,7 +240,7 @@ def connect():
             client_socket.connect(("127.0.0.1", 5000))
             try_connect = False
         except:
-            print("Kein Server gefunden")
+            print(bcolors.WARNING + "Kein Server gefunden" + bcolors.END)
 
 def RSA_Server():
     global key_server
@@ -279,24 +270,24 @@ def set_name():
 
 def main():
     while running == True:
-        #try:
-        msg = input(">>> ")
+        try:
+            msg = input(">>> ")
 
-        if " " not in msg:
-            switch(Befehl=msg.lower().strip())
-            continue
+            if " " not in msg:
+                switch(Befehl=msg.lower().strip())
+                continue
 
-        msg = msg.split(" ")
-        Befehl = msg[0]
-        msg.pop(0)
-        Empfänger = msg[0]
-        msg.pop(0)
-        msg = " ".join(msg)
-        switch(Befehl=Befehl.lower(), parameter1=Empfänger, parameter2=msg)
+            msg = msg.split(" ")
+            Befehl = msg[0]
+            msg.pop(0)
+            Empfänger = msg[0]
+            msg.pop(0)
+            msg = " ".join(msg)
+            switch(Befehl=Befehl.lower(), parameter1=Empfänger, parameter2=msg)
 
-        #except :
-        #    if running == True:
-        #        print("Es gab ein Fehler bei dem Input")
+        except:
+            if running == True:
+                print(bcolors.WARNING + "Es gab ein Fehler bei dem Input" + bcolors.END)
 
 #Global Variable
 key_client = b'\x9c\x98l0\xe4\xddPJ\xd5\x96\xfb\x83\xb9\x08\xb4\x1e'
@@ -304,7 +295,7 @@ key_server = None
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 running = True
 nachrichten = []
-list_log = []
+logs = []
 users = {}
 pk = b""
 sk = b""
@@ -320,6 +311,6 @@ if __name__ == "__main__":
     t = Read_Thread(client_socket)
     t.start()
 
-    #while start == False:
-    #    pass
+    while start == False:
+        pass
     main()
