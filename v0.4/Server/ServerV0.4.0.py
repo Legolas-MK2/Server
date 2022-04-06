@@ -44,24 +44,28 @@ def start(ID,sock,addr):
         msg = Cipher.RSA_encrypt(Client.pk, Client.key)
         Send(msg, False)
 
-    def set_name():
-        while len(Client.Name) < 1:
-            Client.Name = Read()
-            if len(ID_list) == 1:
-                break
-
+    def get_name():
+        Name = ""
+        while len(Name) < 1:
+            Name = Read()
+            if len(ID_list) == 0:
+                Send(" ")
+                print(f"{bcolors.OKGREEN}Der Nutzer {Client.Name} hat sich eingeloggt und hat die ID {ID} bekommen{bcolors.END}")
+                return Name
+            continue_ = False
             for s in ID_list:
-                if ID_list[s].Name == Client.Name:
+                if ID_list[s].Name == Name:
                     Send("e")
-                    Client.Name = ""
-                    continue
-        Send(" ")
-
-        print(f"{bcolors.OKGREEN}Der Nutzer {Client.Name} hat sich eingeloggt und hat die ID {ID} bekommen{bcolors.END}")
+                    continue_ = True
+            if continue_:
+                Name = ""
+                continue
+            Send(" ")
+            print(f"{bcolors.OKGREEN}Der Nutzer {Client.Name} hat sich eingeloggt und hat die ID {ID} bekommen{bcolors.END}")
+            return Name
 
     def connect_to_all():
         for client in ID_list:
-
             if ID_list[client].Name != Client.Name:
 
                 pk = bytes_to_int(ID_list[client].pk)
@@ -93,21 +97,22 @@ def start(ID,sock,addr):
 
     Client = client()
     def main():
-        try:
+        #try:
 
-            Client.Socket = sock
-            Client.ID = ID
+        Client.Socket = sock
+        Client.ID = ID
 
-            set_key()
-            set_name()
-            connect_to_all()
+        set_key()
 
-            ID_list[ID] = Client
-            ID_list[ID].start()
-        except:
+        Client.Name = get_name()
+        connect_to_all()
+
+        ID_list[ID] = Client
+        ID_list[ID].start()
+        """except:
             print(f"{bcolors.FAIL}die Verbindung zu dem Client {Client.Name if len(Client.Name) > 0 else ID} wurde verloren{bcolors.END}")
             temp.pop(ID)
-            sub_from_onlinelist(Client.Name)
+            sub_from_onlinelist(Client.Name)"""
 
     main()
 class client(threading.Thread):
@@ -134,6 +139,12 @@ class client(threading.Thread):
         sleep(0.1)
         return recv
 
+    """def Send_von(self, Sender, msg):
+
+        self.Send(Sender)
+        self.Send(msg, False)
+        pass
+    """
     def Send(self, msg, crypt=True):
         sleep(0.1)
         if crypt:
@@ -254,7 +265,7 @@ if __name__ == '__main__':
             (sock, addr) = server_socket.accept()
             temp[i] = threading.Thread(target=start, args=(i, sock, addr))
             temp[i].start()
-            print(bcolors.OKGREEN + "Ein neuer Client hat sich verbunden" + bcolors.END)
+            print(bcolors.OKGREEN, "Ein neuer Client hat sich verbunden", bcolors.END)
         except:
             print(bcolors.WARNING + "ein Problem mit dem aktzeptieren" + bcolors.END)
 

@@ -17,6 +17,7 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+
 class Read_Thread(threading.Thread):
     global nachrichten
     global running
@@ -27,11 +28,9 @@ class Read_Thread(threading.Thread):
         threading.Thread.__init__(self)
         self.socket = socket
 
-
     def run(self):
         global running
         global start
-
         self.set_keys()
 
         start = True
@@ -54,22 +53,10 @@ class Read_Thread(threading.Thread):
 
                         nachrichten.append(f"von {Sender}: " + msg)
                         logs.append(f"von {Sender}: " + msg)
+
             except Exception as e:
                 running = False
-                print(bcolors.FAIL)
-
-                if str(e) == "[WinError 10054] Eine vorhandene Verbindung wurde vom Remotehost geschlossen":
-
-                    print("\nThread wurde Abgebrochen")
-                    print("Die Verbindung zum Server wurde Abgebrochen")
-
-                else:
-
-                    print("\nThread wurde Abgebrochen")
-                    print("except:", str(e))
-
-                print(bcolors.END)
-                sys.exit(0)
+                print(bcolors.FAIL + "\n\nThread wurde Abgebrochen\nexcept: " + str(e) + bcolors.END)
 
     def set_keys(self):
         users[Name] = Cipher.generate_key(20)
@@ -94,7 +81,6 @@ class Read_Thread(threading.Thread):
             client_socket.close()
             print("Die Verbindung wurde geschlossen")
             sys.exit()
-
         elif command[0] == "#O":
             global sk
             mode = command[1]
@@ -111,8 +97,11 @@ class Read_Thread(threading.Thread):
                 key = self.int_to_bytes(int(key))
                 key = Cipher.RSA_decrypt(sk, key)
                 users[user_name] = key
+            elif mode == "add":
+
+                pass
             else:
-                print(bcolors.WARNING + command + "Wurde vom Server gesendet ohne es zuverarbeiten" + bcolors.END)
+                print(bcolors.WARNING + command + " Wurde vom Server gesendet ohne es zuverarbeiten" + bcolors.END)
 
     def Read(self, key):
         recv = client_socket.recv(4096)
@@ -172,7 +161,7 @@ def Send_to_client(Empfänger, msg):
     for a, b in users.items():
         if a == Empfänger:
             Send(Empfänger, key_server)
-            Send(msg,  users[Empfänger])
+            Send(msg, users[Empfänger])
             print("Nachicht wurde gesendet")
             logs.append(f"an {Empfänger}: {msg}")
             return
@@ -186,14 +175,14 @@ def close():
     running = False
     Send("Server", key_server)
     Send("#C", key_server)
-    sleep(5)
     sys.exit()
 
 def online():
     l = ""
     for user in users.items():
-        l += user[0]+", "
+        l += user[0] + ", "
     print(l[:-2])
+
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -208,19 +197,21 @@ def log():
     for msg in logs:
         print(msg)
 
+
 def help():
     print("""Vielen Dank dass sie sich für den Hilfecommand Entschieden haben. Wir wünschen ihnen einen schönen Tag noch mit den folgenden Commands :)
         Nachrichten senden          --> send [Empfänger] Nachricht
         Nachrichten anschauen       --> update, msg
         Löschende Nachriten an/aus  --> log
         Erreichbare Clients sehen   --> online
-        
+
         Bildschirm säubern          --> cls
         Client schließen            --> close
-        
+
         Hilfe (das hier) anzeigen   --> help """)
 
-def switch(Befehl, parameter1 = "", parameter2 = ""):
+
+def switch(Befehl, parameter1="", parameter2=""):
     Befehl_help = ["help", "hilfe", "bitte_helfen_sie_mir_ich_bin_in_gefahr_bitte_helfen_sie_mir"]
     Befehl_update = ["update", "reload", "msg", "#u"]
     Befehl_send = ["send", "an", "to", "#s"]
@@ -255,6 +246,7 @@ def connect():
         except:
             print(bcolors.WARNING + "Kein Server gefunden" + bcolors.END)
 
+
 def RSA_Server():
     global key_server
     global pk
@@ -264,8 +256,10 @@ def RSA_Server():
     key = Read(None)
     key_server = Cipher.RSA_decrypt(sk, key)
 
+
 def set_name():
     global Name
+
     while True:
         try:
             clear()
@@ -279,7 +273,6 @@ def set_name():
         recv = Read(key_server)
         if recv == " ":
             break
-
 
 def main():
     while running == True:
@@ -302,7 +295,8 @@ def main():
             if running == True:
                 print(bcolors.WARNING + "Es gab ein Fehler bei dem Input" + bcolors.END)
 
-#Global Variable
+
+# Global Variable
 key_client = b'\x9c\x98l0\xe4\xddPJ\xd5\x96\xfb\x83\xb9\x08\xb4\x1e'
 key_server = None
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -2,7 +2,6 @@ import socket
 import threading
 from time import sleep
 import Cipher
-#dawdwadawda
 
 class bcolors:
     HEADER = '\033[95m'
@@ -44,24 +43,28 @@ def start(ID,sock,addr):
         msg = Cipher.RSA_encrypt(Client.pk, Client.key)
         Send(msg, False)
 
-    def set_name():
-        while len(Client.Name) < 1:
-            Client.Name = Read()
-            if len(ID_list) == 1:
-                break
-
+    def get_name():
+        Name = ""
+        while len(Name) < 1:
+            Name = Read()
+            if len(ID_list) == 0:
+                Send(" ")
+                print(f"{bcolors.OKGREEN}Der Nutzer {Client.Name} hat sich eingeloggt und hat die ID {ID} bekommen{bcolors.END}")
+                return Name
+            continue_ = False
             for s in ID_list:
-                if ID_list[s].Name == Client.Name:
+                if ID_list[s].Name == Name:
                     Send("e")
-                    Client.Name = ""
-                    continue
-        Send(" ")
-
-        print(f"{bcolors.OKGREEN}Der Nutzer {Client.Name} hat sich eingeloggt und hat die ID {ID} bekommen{bcolors.END}")
+                    continue_ = True
+            if continue_:
+                Name = ""
+                continue
+            Send(" ")
+            print(f"{bcolors.OKGREEN}Der Nutzer {Client.Name} hat sich eingeloggt und hat die ID {ID} bekommen{bcolors.END}")
+            return Name
 
     def connect_to_all():
         for client in ID_list:
-
             if ID_list[client].Name != Client.Name:
 
                 pk = bytes_to_int(ID_list[client].pk)
@@ -94,12 +97,12 @@ def start(ID,sock,addr):
     Client = client()
     def main():
         try:
-
             Client.Socket = sock
             Client.ID = ID
-
+            Client.addr = addr
             set_key()
-            set_name()
+
+            Client.Name = get_name()
             connect_to_all()
 
             ID_list[ID] = Client
@@ -123,7 +126,7 @@ class client(threading.Thread):
         self.running = False
         self.key = None
         self.pk = None
-
+        self.Kontakte = {} #[online] schreiben; [anstehent] anfrage annhemen
     def Read(self, crypt=True):
 
         recv = self.Socket.recv(4096)
@@ -134,6 +137,10 @@ class client(threading.Thread):
         sleep(0.1)
         return recv
 
+    def Send_von(self, Sender, msg):
+        self.Send(Sender)
+        self.Send(msg, False)
+
     def Send(self, msg, crypt=True):
         sleep(0.1)
         if crypt:
@@ -141,6 +148,7 @@ class client(threading.Thread):
             msg = Cipher.AES_encrypt_text(msg, self.key)
 
         self.Socket.send(msg)
+
     def run(self):
         try:
             self.running = True
@@ -174,8 +182,6 @@ class client(threading.Thread):
 
         elif parameter == "#O":
             pass
-        elif parameter == "#K":
-            pass
         else:
             print(f"{bcolors.WARNING}Der Client {self.Name} hat versucht an den Server die Nachicht '{parameter}' zusenden ohne das der Server eine Antwort hat{bcolors.END}")
 
@@ -203,8 +209,7 @@ class client(threading.Thread):
 
         print(f"{self.Name} --> {Empfänger_Name}")
         print("msg ->", msg)
-        ID_list[Empfänger_ID].Send(self.Name)
-        ID_list[Empfänger_ID].Send(msg, False)
+        ID_list[Empfänger_ID].Send_von(self.Name, msg)
 
     def add_to_onlinelist(self, name):
         global ID_list
@@ -241,6 +246,7 @@ class client(threading.Thread):
 
 temp = {}
 ID_list = {}
+#TODO name_list = {}
 
 if __name__ == '__main__':
     Nutzer_max = 10
@@ -254,7 +260,7 @@ if __name__ == '__main__':
             (sock, addr) = server_socket.accept()
             temp[i] = threading.Thread(target=start, args=(i, sock, addr))
             temp[i].start()
-            print(bcolors.OKGREEN + "Ein neuer Client hat sich verbunden" + bcolors.END)
+            print(bcolors.OKGREEN, "Ein neuer Client hat sich verbunden", bcolors.END)
         except:
             print(bcolors.WARNING + "ein Problem mit dem aktzeptieren" + bcolors.END)
 
