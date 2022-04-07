@@ -1,115 +1,109 @@
-from kivymd.app import MDApp
 from kivy.core.window import Window
+from kivy.uix.button import Button
+from kivy.uix.boxlayout import BoxLayout
+from kivymd.app import MDApp
 from kivy.lang import Builder
-from kivymd.uix.screen import Screen
-from kivymd.uix.datatables import MDDataTable
-from kivy.metrics import dp
+from kivy.uix.screenmanager import ScreenManager, Screen
+from kivymd.uix.list import OneLineListItem
+from kivy.clock import Clock
+from kivy.uix.checkbox import CheckBox
 
 Window.size = (300, 500)
 
 kv = """
-<Tabelle>:
-    MDDataTable:
-        pos_hint:{'center_x': 0.5, 'center_y': 0.5}
-        size_hint:(0.9, 0.6)
-        check:True
-        # rows_num:10
-        column_data:[("No.", dp(18)), ("Food", dp(20)), ("Calories", dp(20))]
-        row_data:[("1", "Burger", "300"), ("2", "Oats", "200"), ("3", "Oats", "200"), ("4", "Oats", "200")]
+WindowManager:
+    FirstWindow:
+        name: 'firstwindow'
+    SecondWindow:
+        name: 'secondwindow'
 
-Screen:
+
+<FirstWindow>:
     BoxLayout:
-        orientation: "vertical"
+        orientation: 'vertical'
+
         MDToolbar:
-            title: "Einkaufapp"
-            #left_action_items: [["coffee", lambda x: app.navigation_draw()]]
-            #right_action_items: [["clock", lambda x: app.navigation_draw()]]
-            elevation: 15
-        MDLabel:
-            text: "test text"
-            halign: "center"
-            
-        MDDataTable:
-            #check:True
-            #rows_num:10
-            column_data:[("No.", dp(18)), ("Food", dp(20)), ("Calories", dp(20))]
-            row_data:[("1", "Burger", "300"), ("2", "Oats", "200"), ("3", "Oats", "200"), ("4", "Oats", "200")]
-        
-        MDBottomAppBar:
-            MDToolbar:
-                title: "Demo2"
-                mode : "center"
-                type: 'bottom'
-                icon: "plus"
-                on_action_button: app.add_element()
+            title: 'SCREEN 1'
+
+        Button:
+            text: 'List maker button'
+            on_release: root.new_element()
+
+        ScrollView:
+            MDList:
+                id: list_one
+
+        MDFloatingActionButton:
+            elevation: 8
+            icon: 'plus'
+            pos_hint: {'center_x': .5}
+            on_press:
+                app.root.current = 'secondwindow'
+                root.manager.transition.direction = 'up'
+
+<SecondWindow>:
+    BoxLayout:
+        orientation: 'vertical'
+
+        MDToolbar:
+            title: 'Neues Element'
+
+        ScrollView:
+            MDList:
+                id: list_two
+
+        MDRaisedButton:
+            text: 'Go Back'
+            on_release:
+                app.root.current = 'firstwindow'
+                root.manager.transition.direction = 'down'
 """
 
-class Tabelle(MDApp):
+
+
+
+class FirstWindow(Screen):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        Clock.schedule_once(self.create_list)
+
+    def create_list(self, *args):
+        for i in range(20):
+            pass
+            #self.ids.list_one.add_widget(OneLineListItem(text=f'List Item {i}'))
+
+    # But adding widgets doesn't happen automatically
+    # I tried variations but the variable is always not defined
+    # self.ids.list_one.add_widget(OneLineListItem(text='List Item 1'))
+    # root.ids.list_one.add_widget(OneLineListItem(text='List Item 1'))
+    # ids.list_one.add_widget(OneLineListItem(text='List Item 1'))
+
+    # This function works when called from a button
+    def new_element(self,menge = 3466):
+        #for i in range(0, 41, 2):
+        boxlayout = BoxLayout()
+        boxlayout.height = 35
+        boxlayout.orientation = 'horizontal'
+        checkbox = CheckBox()
+        button = Button(text=str(menge))
+        boxlayout.add_widget(button)
+        button = Button(text=str(menge*4763))
+        boxlayout.add_widget(button)
+        self.ids.list_one.add_widget(boxlayout)
+
+class SecondWindow(Screen):
+    pass
+
+
+class WindowManager(ScreenManager):
+    pass
+
+
+class MultiscreenApp(MDApp):
     def build(self):
-        self.theme_cls.primary_palette = 'Teal'
-        screen = Screen()
-        self.data_table = MDDataTable(pos_hint={'center_x': 0.5, 'center_y': 0.5},
-                                      size_hint=(0.9, 0.6),
-                                      check=True,
-                                      # rows_num=10,
-                                      column_data=[
-                                          ("No.", dp(18)),
-                                          ("Food", dp(20)),
-                                          ("Calories", dp(20))
-                                      ],
-                                      row_data=[
-                                          ("1", "Burger", "300"),
-                                          ("2", "Oats", "200"),
-                                          ("3", "Oats", "200"),
-                                          ("4", "Oats", "200"),
-                                          ("5", "Oats", "200"),
-                                          ("6", "Oats", "200"),
-                                          ("7", "Oats", "200"),
-                                          ("8", "Oats", "200")
-
-                                      ]
-                                      )
-        self.data_table.bind(on_row_press=self.on_row_press)
-        self.data_table.bind(on_check_press=self.on_check_press)
-        screen.add_widget(self.data_table)
-        return screen
-
-    def on_row_press(self, instance_table, instance_row):
-        print(instance_table, instance_row, "on_row_press")
-
-    def on_check_press(self, instance_table, current_row):
-        print(instance_table, current_row, "on_check_press")
-        self.data_tables.remove_row(instance_table)
-
-    def navigation_draw(self):
-        print("test")
-        pass
-
-    def add_element(self):
-        print("Es wird was zur liste hinzugefügt")
-        pass
+        return Builder.load_string(kv)
 
 
-class App(MDApp):
-    def build(self):
-        self.theme_cls.primary_palette = 'Teal'
-        screen = Builder.load_string(kv)
-
-        return screen
-
-    def on_row_press(self, instance_table, instance_row):
-        print(instance_table, instance_row, "on_row_press")
-
-    def on_check_press(self, instance_table, current_row):
-        print(instance_table, current_row, "on_check_press")
-        self.data_tables.remove_row(instance_table)
-
-    def navigation_draw(self):
-        print("test")
-        pass
-
-    def add_element(self):
-        print("Es wird was zur liste hinzugefügt")
-        pass
-
-App().run()
+if __name__ == '__main__':
+    MultiscreenApp().run()
