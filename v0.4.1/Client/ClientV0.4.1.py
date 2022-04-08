@@ -263,7 +263,10 @@ def set_name():
     while True:
         try:
             clear()
-            Name = input("Name: ")
+            #sleep(1)
+            Name = "a"
+            print(Name)
+            #Name = input("Name: ")
         except:
             continue
         if Name[:6] == "Server" or " " in Name or Name == "":
@@ -311,13 +314,14 @@ Name = ""
 start = False
 
 if __name__ == "__main__":
-
-    connect()
-    RSA_Server()
-    set_name()
-    t = Read_Thread(client_socket)
-    t.start()
-
+    try:
+        connect()
+        RSA_Server()
+        set_name()
+        t = Read_Thread(client_socket)
+        t.start()
+    except:
+        sys.exit(0)
     while start == False:
         pass
     main()

@@ -1,11 +1,10 @@
 from kivy.core.window import Window
 from kivy.uix.button import Button
+from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
 from kivymd.app import MDApp
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen
-from kivymd.uix.list import OneLineListItem
-from kivy.clock import Clock
 from kivy.uix.checkbox import CheckBox
 
 Window.size = (300, 500)
@@ -26,8 +25,8 @@ WindowManager:
             title: 'SCREEN 1'
 
         Button:
-            text: 'List maker button'
-            on_release: root.new_element()
+            size_hint: 1,0.1
+            on_release: root.new_element(6,"Nudeln")
 
         ScrollView:
             MDList:
@@ -48,52 +47,95 @@ WindowManager:
         MDToolbar:
             title: 'Neues Element'
 
-        ScrollView:
+        BoxLayout:
+            orientation: 'vertical'
+            Label:
+                text: "Menge"
+                color: 0,0,0,1
+                size_hint: 1,0.1
+            
+            TextInput:
+                pos_hint: {"center_x": .5, "center_y": .5}
+                multiline: False
+                size_hint: 0.9,0.15
+                
+            BoxLayout:
+                size_hint: 1,0.15
+                orientation: "horizontal"
+                Button:
+                    text: "1"
+                Button:
+                    text: "2"
+                Button:
+                    text: "3"
+                Button:
+                    text: "4"
+                Button:
+                    text: "5"
+                Button:
+                    text: "6"
+                Button:
+                    text: "7"
+            Label:
+                size_hint: 1,0.1
+            Label:
+                text: "Produkt"
+                color: 0,0,0,1
+                size_hint: 1,0.1
+            TextInput:
+                pos_hint: {"center_x": .5, "center_y": .5}
+                multiline: False
+                size_hint: 0.9,0.15
             MDList:
-                id: list_two
-
-        MDRaisedButton:
-            text: 'Go Back'
+                id: list_Produkt
+            Label:
+        
+        
+        MDFloatingActionButton:
+            icon: "android"
+            md_bg_color: app.theme_cls.primary_color
+            pos_hint: {"center_x": .1, "center_y": .5}
             on_release:
+                app.root.current = 'firstwindow'
+                root.manager.transition.direction = 'down'
+                
+        MDFloatingActionButton:
+            icon: "plus"
+            pos_hint: {"center_x": .5, "center_y": .5}
+            md_bg_color: app.theme_cls.primary_color
+            on_release:
+                root.add()
                 app.root.current = 'firstwindow'
                 root.manager.transition.direction = 'down'
 """
 
-
-
+Itemlist = {}
 
 class FirstWindow(Screen):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        Clock.schedule_once(self.create_list)
+        print("aaaaaaaaaaaaaaaa")
+    def build(self):
+        print("build")
 
-    def create_list(self, *args):
-        for i in range(20):
-            pass
-            #self.ids.list_one.add_widget(OneLineListItem(text=f'List Item {i}'))
-
-    # But adding widgets doesn't happen automatically
-    # I tried variations but the variable is always not defined
-    # self.ids.list_one.add_widget(OneLineListItem(text='List Item 1'))
-    # root.ids.list_one.add_widget(OneLineListItem(text='List Item 1'))
-    # ids.list_one.add_widget(OneLineListItem(text='List Item 1'))
-
-    # This function works when called from a button
-    def new_element(self,menge = 3466):
-        #for i in range(0, 41, 2):
+    def new_element(self, menge=5, name="Bananne"):
         boxlayout = BoxLayout()
         boxlayout.height = 35
         boxlayout.orientation = 'horizontal'
-        checkbox = CheckBox()
-        button = Button(text=str(menge))
-        boxlayout.add_widget(button)
-        button = Button(text=str(menge*4763))
-        boxlayout.add_widget(button)
-        self.ids.list_one.add_widget(boxlayout)
 
+        boxlayout.add_widget(CheckBox(size_hint=(0.35, 1)))
+
+        boxlayout.add_widget(Label(markup=True, text="[color=ff3333]"+str(name)+"[/color]"))
+
+        boxlayout.add_widget(Button(text=str(menge)))
+
+        self.ids.list_one.add_widget(boxlayout)
+FirstWindowi = FirstWindow()
 class SecondWindow(Screen):
-    pass
+    def add(self):
+        print("add")
+
 
 
 class WindowManager(ScreenManager):
@@ -103,6 +145,10 @@ class WindowManager(ScreenManager):
 class MultiscreenApp(MDApp):
     def build(self):
         return Builder.load_string(kv)
+
+    def app(self):
+        print("Edbhugiotga937")
+        pass
 
 
 if __name__ == '__main__':
