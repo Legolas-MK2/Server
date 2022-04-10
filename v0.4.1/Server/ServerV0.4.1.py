@@ -47,6 +47,9 @@ def start(ID,sock,addr):
         Name = ""
         while len(Name) < 1:
             Name = Read()
+            if Name[:6] == "Server" or " " in Name or Name == "":
+                Send("e")
+                continue
             if len(ID_list) == 0:
                 Send(" ")
                 print(f"{bcolors.OKGREEN}Der Nutzer {Client.Name} hat sich eingeloggt und hat die ID {ID} bekommen{bcolors.END}")

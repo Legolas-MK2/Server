@@ -17,7 +17,7 @@
                 pos_hint: {'center_x': .5}
                 on_release:
                     root.current = 'window_add'
-                    root.transition.direction = 'up'
+                    #transition.direction = 'up'
 
     Screen:
         name: 'window_add'
@@ -39,7 +39,7 @@
                     pos_hint: {"center_x": .5, "center_y": .5}
                     multiline: False
                     input_filter: "int"
-                    size_hint: 0.9,0.20
+                    size_hint: 0.9,0.15
                     
                 BoxLayout:
                     size_hint: 1,0.15
@@ -82,7 +82,7 @@
                     id: Produkt
                     pos_hint: {"center_x": .5, "center_y": .5}
                     multiline: False
-                    size_hint: 0.9,0.20
+                    size_hint: 0.9,0.15
                 MDList:
                     id: list_Produkt
                 Label:
@@ -94,7 +94,7 @@
                 pos_hint: {"center_x": .1, "center_y": .5}
                 on_release:
                     root.current = 'main'
-                    root.transition.direction = 'down'
+                    #root.manager.transition.direction = 'down'
                     
             MDFloatingActionButton:
                 icon: "plus"
@@ -105,5 +105,5 @@
                     count.text = ""
                     Produkt.text = ""
                     app.root.current = 'main'
-                    root.transition.direction = 'down'
+                    #root.manager.transition.direction = 'down'
 
