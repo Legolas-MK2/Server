@@ -47,12 +47,14 @@ def start(ID,sock,addr):
         Name = ""
         while len(Name) < 1:
             Name = Read()
+            print(f"Name = {Name}")
             if Name[:6] == "Server" or " " in Name or Name == "":
+                print("name error")
                 Send("e")
                 continue
-            if len(ID_list) == 0:
+            elif len(ID_list) == 0:
                 Send(" ")
-                print(f"{bcolors.OKGREEN}Der Nutzer {Client.Name} hat sich eingeloggt und hat die ID {ID} bekommen{bcolors.END}")
+                print(f"{bcolors.OKGREEN}Der Nutzer {Name} hat sich eingeloggt und hat die ID {ID} bekommen{bcolors.END}")
                 return Name
             continue_ = False
             for s in ID_list:
@@ -263,7 +265,7 @@ if __name__ == '__main__':
             (sock, addr) = server_socket.accept()
             temp[i] = threading.Thread(target=start, args=(i, sock, addr))
             temp[i].start()
-            print(bcolors.OKGREEN, "Ein neuer Client hat sich verbunden", bcolors.END)
+            print(bcolors.OKGREEN+ "Ein neuer Client hat sich verbunden"+ bcolors.END)
         except:
             print(bcolors.WARNING + "ein Problem mit dem aktzeptieren" + bcolors.END)
 

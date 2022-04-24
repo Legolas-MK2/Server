@@ -266,7 +266,7 @@ def set_name():
             #sleep(1)
             Name = "a"
             print(Name)
-            #Name = input("Name: ")
+            Name = input("Name: ")
         except:
             continue
         if Name[:6] == "Server" or " " in Name or Name == "":

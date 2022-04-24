@@ -10,11 +10,11 @@ from kivy.core.window import Window
 from kivy.uix.screenmanager import ScreenManager
 from kivy.graphics import Color, Rectangle
 import time
+from Einkaufen_Client import list_add
+from Einkaufen_Client import list_sub
 
 Window.size = (300, 500)
 
-Produkt_widget = []
-ii = 3
 def callback(instance):
     print('The button <%s> is being pressed' % instance.text)
 
@@ -22,24 +22,64 @@ class Manager(ScreenManager):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def delete_produkt(self, instance):
+    def refresh(self):
+        global list_add
+        global list_sub
 
-        pass
+        #add
+        if len(list_add) != 0:
+            for element in list_add:
+                count, name = element
+                self.new_element(count, name)
+            list_add = []
+
+        #sub
+        if len(list_sub) == 0:
+            return
+
+        for element in list_sub:
+            count, name = element
+            if ("boxlayout_" + name) not in self.ids:
+                break
+
+            for i in range(int(count)):
+                id_label = "label_count_" + name
+                self.ids[id_label].text = "[color=000000]" + str(int(self.ids[id_label].text[14:-8]) - 1) + "[/color]"
+
+                if self.ids[id_label].text == "[color=000000]" + str(0) + "[/color]":
+                    self.ids.list_one.remove_widget(self.ids[("boxlayout_" + name)])
+
+        list_sub = []
 
     def new_element(self, count="", name=""):
+        name = name.strip()
+        count = count.strip()
         def del_element(instance):
             self.ids.list_one.remove_widget(self.ids[("boxlayout_" + name)])
 
         def sub_element(instance):
-            self.ids[("label_count_" + name)].text = "[color=000000]" + str(int(self.ids[("label_count_" + name)].text[14:-8]) - 1) + "[/color]"
-            if self.ids[("label_count_" + name)].text == "[color=000000]" + str(0) + "[/color]":
+            id_label = "label_count_" + name
+            new_count = int(self.ids[id_label].text[14:-8]) - 1
+            self.ids[id_label].text = "[color=000000]" + str(new_count) + "[/color]"
+            if new_count == 0:
                 del_element(1)
 
         def add_element(instance):
-            self.ids[("label_count_" + name)].text = "[color=000000]" + str(int(self.ids[("label_count_" + name)].text[14:-8]) + 1) + "[/color]"
-        if count.strip() == "":
+            id_label = "label_count_" + name
+            if int(self.ids[id_label].text[14:-8]) > 998:
+                return
+            self.ids[id_label].text = "[color=000000]" + str(int(self.ids[id_label].text[14:-8]) + 1) + "[/color]"
+
+
+        if count == "":
             return
-        if name.strip() == "":
+        if name == "":
+            return
+        if 1 < int(count) > 999:
+            return
+        if ("boxlayout_"+name) in self.ids:
+            for _ in range(int(count)):
+                add_element(1)
             return
 
         boxlayout = BoxLayout()
@@ -58,6 +98,7 @@ class Manager(ScreenManager):
         label_count = Label(markup=True, text="[color=000000]" + str(count) + "[/color]")
         self.ids[("label_count_" + name)] = label_count
         Button_add = Button(text="+", on_press=add_element)
+
         boxlayout.add_widget(Button_del)
         boxlayout2.add_widget(Button_sub)
         boxlayout2.add_widget(label_count)
