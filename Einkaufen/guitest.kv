@@ -24,25 +24,25 @@
         name: 'window_add'
         BoxLayout:
             orientation: 'vertical'
-    
+
             MDToolbar:
                 title: 'Neues Element'
 
-    
+
             BoxLayout:
                 orientation: 'vertical'
                 Label:
                     text: "Menge"
                     color: 0,0,0,1
                     size_hint: 1,0.1
-                
+
                 TextInput:
                     id: count
                     pos_hint: {"center_x": .5, "center_y": .5}
                     multiline: False
                     input_filter: "int"
                     size_hint: 0.9,0.3
-                    
+
                 BoxLayout:
                     size_hint: 1,0.15
                     orientation: "horizontal"
@@ -102,24 +102,22 @@
                 MDList:
                     id: list_Produkt
                 Label:
-            
+
             BoxLayout:
                 MDRaisedButton:
                     text: "Zurück"
                     md_bg_color: app.theme_cls.primary_color
-                    #pos_hint: {"center_x": .1, "center_y": .5}
                     on_release:
                         root.current = 'main'
                         root.transition.direction = 'down'
 
                 MDRaisedButton:
                     text: "Weiter"
-                    #pos_hint: {"center_x": .5, "center_y": .5}
                     md_bg_color: app.theme_cls.primary_color
                     on_release:
+                        root.send_new_element(count.text, Produkt.text)
                         root.new_element(count.text, Produkt.text)
                         count.text = ""
                         Produkt.text = ""
                         app.root.current = 'main'
                         root.transition.direction = 'down'
-

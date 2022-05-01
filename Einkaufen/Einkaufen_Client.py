@@ -2,11 +2,12 @@ from time import sleep
 import threading
 import Cipher
 import socket
-import os
 import sys
 
+list_add = [["6", "Bannane"], ["5", "Apfel"]]  # [[Count, "Name"], [Count, "Name"]]
+list_sub = [["2", "Birne"]]  # [[Count, "Name"], [Count, "Name"]]"""
 
-class bcolors():
+class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKCYAN = '\033[96m'
@@ -17,7 +18,7 @@ class bcolors():
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-class SomeThread(threading.Thread):
+class Client(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self.key_server = None
@@ -25,101 +26,60 @@ class SomeThread(threading.Thread):
         self.running = True
         self.nachrichten = []
         self.logs = []
-        self.users = {}
         self.pk = b""
         self.sk = b""
-        self.Name = ""
         self.start_ = False
-        self.list_add = [["6", "Bannane"], ["5", "Apfel"]]  # [[Count, "Name"], [Count, "Name"]]
-        self.list_sub = [["2", "a"]]  # [[Count, "Name"], [Count, "Name"]]"""
+        self.list = []
+
     def run(self):
         try:
             self.connect()
             self.RSA_Server()
-            self.set_name()
-            t = threading.Thread(target=self.Read)
+            t = threading.Thread(target=self.Read_th)
             t.start()
         except:
             sys.exit(0)
+
         while self.start_ == False:
             sleep(1)
             pass
         self.main()
 
-    def Read(self):
-        def set_keys():
-            self.users[self.Name] = Cipher.generate_key(20)
-            while True:
-                recv = self.Read(self.key_server)
-                if recv == "e":
-                    return
-                recv = recv.split(" ")
-                name = recv[0]
-                self.pk = recv[1]
-                self.pk = self.int_to_bytes(int(self.pk))
-                bkey = Cipher.generate_key(20)
-                key = Cipher.RSA_encrypt(self.pk, bkey)
-                key = str(self.bytes_to_int(key))
-                self.users[name] = bkey
-    
-                self.Send(f"{name} {key}", self.key_server)
-    
+    def Read_th(self):
         def Server(command):
             if command[0] == "#C" and self.running == False:
                 self.socket.close()
                 print("Die Verbindung wurde geschlossen")
                 sys.exit()
-            elif command[0] == "#O":
-                mode = command[1]
-                user_name = command[2]
-    
-                if mode == "-":
-                    for user in self.users.items():
-                        if user[0] == user_name:
-                            self.users.pop(user_name)
-                            return
-    
-                elif mode == "+":
-                    key = command[3]
-                    key = self.int_to_bytes(int(key))
-                    key = Cipher.RSA_decrypt(self.sk, key)
-                    self.users[user_name] = key
-                elif mode == "add":
-    
-                    pass
-                else:
-                    print(bcolors.WARNING + command + " Wurde vom Server gesendet ohne es zuverarbeiten" + bcolors.END)
-
-        set_keys()
+            else:
+                print(bcolors.WARNING + command + " Wurde vom Server gesendet ohne es zuverarbeiten" + bcolors.END)
 
         self.start_ = True
         while self.running:
             try:
-                Sender = self.Read(self.key_server)
-                if len(Sender) == 0:
+                recv = self.Read(self.key_server)
+                print(recv)
+                if len(recv) == 0:
                     continue
 
-                if Sender == "Server":
+                if recv == "Server":
                     recv = self.Read(self.key_server).split(" ")
                     Server(recv)
                     continue
 
-                for user in self.users.items():
-                    if Sender in user[0]:
-                        recv = self.Read(self.users[Sender])  # add 1 Birne
-                        msg = recv.split(" ")
-                        mode = msg[0]
-                        msg.pop(0)
-                        count = msg[0]
-                        msg.pop(0)
-                        Produkt = " ".join(msg)
+                mode = recv
+                msg = self.Read(self.key_server)
+                msg = msg.split(" ")
+                count = msg[0]
+                msg.pop(0)
+                Produkt = " ".join(msg)
 
-                        if mode == "add":
-                            self.list_add.extend([[count, Produkt]])
-                            pass
-                        elif mode == "sub":
-                            self.list_sub.extend([[count, Produkt]])
-
+                try:
+                    int(count)
+                except:
+                    continue
+                print(mode, count, Produkt)
+                self.list.extend([[mode, count, Produkt]])
             except Exception as e:
                 self.running = False
                 print(bcolors.FAIL + "\n\nThread wurde Abgebrochen\nexcept: " + str(e) + bcolors.END)
@@ -149,101 +109,46 @@ class SomeThread(threading.Thread):
         self.socket.send(msg)
         sleep(0.1)
     
-    def Update(self):
-    
-        if len(self.nachrichten) == 0:
-            print("Keine neuen Nachichten bekommen")
+    def send_new_produkt(self, mode, count, produkt):
+        list_mode = ["add", "sub", "set"]
+        mode = mode.strip()
+        count = str(count).strip()
+        produkt = produkt.strip()
+
+        if len(mode) < 1:
+            print("Die mode hat kein Inhalt")
             return
-    
-        print(len(self.nachrichten), "neue self.nachrichten")
-        for msg in self.nachrichten:
-            print(msg)
-    
-        self.nachrichten = []
-    
-    def Send_to_client(self, Empfänger, msg):
-        msg = msg.strip()
-        if len(msg) < 1:
-            print("Die Nachicht hat kein Inhalt")
+        if len(count) < 1:
+            print("Die count hat kein Inhalt")
             return
-    
-        for a, b in self.users.items():
-            if a == Empfänger:
-                self.Send(Empfänger, self.key_server)
-                self.Send(msg, self.users[Empfänger])
-                print("Nachicht wurde gesendet")
-                self.logs.append(f"an {Empfänger}: {msg}")
-                return
-    
-        print(bcolors.WARNING + "Client nicht gefunden" + bcolors.END)
-    
+        if len(produkt) < 1:
+            print("Die produkt hat kein Inhalt")
+            return
+        if mode not in list_mode:
+            print("ungültiger modus")
+            return
+
+        self.Send(mode, self.key_server)
+        self.Send(count + " " + produkt, self.key_server)
+        print("Nachicht wurde gesendet")
+
     def close(self):
-    
         print("Verbindung wird geschlossen")
         self.running = False
         self.Send("Server", self.key_server)
         self.Send("#C", self.key_server)
         sys.exit()
-    
-    def online(self):
-        l = ""
-        for user in self.users.items():
-            l += user[0] + ", "
-        print(l[:-2])
-    
-    def clear(self):
-        os.system('cls' if os.name == 'nt' else 'clear')
-    
-    def log(self):
-    
-        if len(self.logs) < 1:
-            print("Keine Nachichten bekommen")
-            return
-    
-        print(len(self.logs), "self.nachrichten")
-        for msg in self.logs:
-            print(msg)
-    
-    
-    def help(self):
-        print("""Vielen Dank dass sie sich für den Hilfecommand Entschieden haben. Wir wünschen ihnen einen schönen Tag noch mit den folgenden Commands :)
-            self.nachrichten senden          --> send [Empfänger] Nachricht
-            self.nachrichten anschauen       --> update, msg
-            Löschende Nachriten an/aus  --> log
-            Erreichbare Clients sehen   --> online
-    
-            Bildschirm säubern          --> cls
-            Client schließen            --> close
-    
-            Hilfe (das hier) anzeigen   --> help """)
-    
-    
-    def switch(self, Befehl, parameter1="", parameter2=""):
-        Befehl_help = ["help", "hilfe", "bitte_helfen_sie_mir_ich_bin_in_gefahr_bitte_helfen_sie_mir"]
-        Befehl_update = ["update", "reload", "msg", "#u"]
+
+    def switch(self, Befehl, parameter1="", parameter2="",parameter3=""):
         Befehl_send = ["send", "an", "to", "#s"]
         Befehl_close = ["close", "exit", "taself.skkill", "#c"]
-        Befehl_clear = ["cls", "clear"]
-        Befehl_online = ["online", "online_list"]
-        Befehl_log = ["log"]
-    
-        if Befehl in Befehl_update:
-            self.Update()
-        elif Befehl in Befehl_send:
-            self.Send_to_client(parameter1, parameter2)
+
+        if Befehl in Befehl_send:
+            self.send_new_produkt(parameter1, parameter2, parameter3)
         elif Befehl in Befehl_close:
             self.close()
-        elif Befehl in Befehl_clear:
-            self.clear()
-        elif Befehl in Befehl_online:
-            self.online()
-        elif Befehl in Befehl_log:
-            self.log()
-        elif Befehl in Befehl_help:
-            help()
         elif Befehl == ".":
-            print(self.list_add)
-            print(self.list_sub)
+            print(self.list)
         else:
             print(f"{bcolors.WARNING}Der Befehl {Befehl} ist entweder falsch geschrieben oder konnte nicht gefunden werden.{bcolors.END}")
     
@@ -258,30 +163,11 @@ class SomeThread(threading.Thread):
     
     
     def RSA_Server(self):
-        self.pk, self.sk = Cipher.RSA_generate_self.pk_self.sk()
-        self.Send(self.pk, None)
+        pk, sk = Cipher.RSA_generate_pk_sk()
+        self.pk, self.sk = pk, sk
+        self.Send(self.pk,  None)
         key = self.Read(None)
         self.key_server = Cipher.RSA_decrypt(self.sk, key)
-    
-    
-    def set_name(self):
-    
-        while True:
-            try:
-                self.clear()
-                #sleep(1)
-                self.Name = "a"
-                print(self.Name)
-                #self.Name = input("Name: ")
-            except:
-                continue
-            if self.Name[:6] == "Server" or " " in self.Name or self.Name == "":
-                self.Name = ""
-                continue
-            self.Send(self.Name, self.key_server)
-            recv = self.Read(self.key_server)
-            if recv == " ":
-                break
     
     def main(self):
         while self.running == True:
@@ -295,15 +181,14 @@ class SomeThread(threading.Thread):
                 msg = msg.split(" ")
                 Befehl = msg[0]
                 msg.pop(0)
-                Empfänger = msg[0]
+                parameter1 = msg[0]
                 msg.pop(0)
-                msg = " ".join(msg)
-                self.switch(Befehl=Befehl.lower(), parameter1=Empfänger, parameter2=msg)
+                parameter2 = msg[0]
+                msg.pop(0)
+                parameter3 = " ".join(msg)
+
+                self.switch(Befehl=Befehl.lower(), parameter1=parameter1, parameter2=parameter2,parameter3=parameter3)
     
             except:
                 if self.running == True:
                     print(bcolors.WARNING + "Es gab ein Fehler bei dem Input" + bcolors.END)
-    
-
-t = SomeThread()
-t.start()
