@@ -1,3 +1,4 @@
+import pickle
 from time import sleep
 import threading
 import Cipher
@@ -31,28 +32,22 @@ class Read_Thread(threading.Thread):
     def run(self):
         global running
         global start
+
         self.set_keys()
 
         start = True
         while running:
             try:
-                Sender = self.Read(key_server)
-                if len(Sender) == 0:
-                    continue
+                jsonn = self.Read(key_server)
 
-                if Sender == "Server":
-                    recv = self.Read(key_server).split(" ")
-                    self.Server(recv)
+                if jsonn['type'] == "metadata":
+                    self.Server(jsonn['message'])
                     continue
 
                 for user in users.items():
-                    if Sender in user[0]:
-                        recv = self.Read(users[Sender])
-                        recv = recv.split(" ")
-                        msg = " ".join(recv)
-
-                        nachrichten.append(f"von {Sender}: " + msg)
-                        logs.append(f"von {Sender}: " + msg)
+                    if jsonn['receiver'] in user[0]:
+                        nachrichten.append(f"von {jsonn['receiver']}: " + jsonn['message'])
+                        logs.append(f"von {jsonn['receiver']}: " + jsonn['massage'])
 
             except Exception as e:
                 running = False
@@ -60,81 +55,94 @@ class Read_Thread(threading.Thread):
 
     def set_keys(self):
         users[Name] = Cipher.generate_key(20)
+
         while True:
-            recv = self.Read(key_server)
-            if recv == "e":
+            jsonn = self.Read(key_server)
+            if jsonn['type'] == "wrong name":
                 return
-            recv = recv.split(" ")
-            name = recv[0]
-            pk = recv[1]
+
+            name = jsonn['message']['name']
+            pk = jsonn['message']['pk']
             pk = self.int_to_bytes(int(pk))
             bkey = Cipher.generate_key(20)
             key = Cipher.RSA_encrypt(pk, bkey)
             key = str(self.bytes_to_int(key))
+
             users[name] = bkey
+            Send(receiver=jsonn['message']['name'],
+                 type="metadata",
+                 message={"name": name,
+                          "key": key},
+                 key=key_server)
 
-            Send(f"{name} {key}", key_server)
-
-    def Server(self, command):
+    def Server(self, list_command):
         global running
-        if command[0] == "#C" and running == False:
+        command = list_command["command"]
+
+        if command == "#C" and running == False:
             client_socket.close()
             print("Die Verbindung wurde geschlossen")
             sys.exit()
-        elif command[0] == "#O":
+        elif command == "#O":
             global sk
-            mode = command[1]
-            user_name = command[2]
-
+            name = list_command["name"]
+            mode = list_command["node"]
             if mode == "-":
                 for user in users.items():
-                    if user[0] == user_name:
-                        users.pop(user_name)
+                    if user[0] == name:
+                        users.pop(name)
                         return
-
             elif mode == "+":
-                key = command[3]
+                key = list_command["key"]
                 key = self.int_to_bytes(int(key))
                 key = Cipher.RSA_decrypt(sk, key)
-                users[user_name] = key
-            elif mode == "add":
-
-                pass
+                users[name] = key
             else:
-                print(bcolors.WARNING + command + " Wurde vom Server gesendet ohne es zuverarbeiten" + bcolors.END)
+                print(bcolors.WARNING + command + " wurde vom Server gesendet ohne es zuverarbeiten" + bcolors.END)
+        else:
+            print(bcolors.WARNING + command + " wurde vom Server gesendet ohne es zuverarbeiten" + bcolors.END)
 
     def Read(self, key):
         recv = client_socket.recv(4096)
-        if key != "":
-            recv = Cipher.AES_decrypt_text(recv, key)
-            recv = str(recv, "utf-8")
+        recv = Cipher.AES_decrypt_text(recv, key)
+        recv = pickle.dumps(recv)
         return recv
 
-    def bytes_to_int(self, xbytes: bytes) -> int:
+    @staticmethod
+    def bytes_to_int(xbytes: bytes) -> int:
         return int.from_bytes(xbytes, "little")
 
-    def int_to_bytes(self, x: int) -> bytes:
+    @staticmethod
+    def int_to_bytes(x: int) -> bytes:
         return x.to_bytes((x.bit_length() + 7) // 8, "little")
+
 
 def Read(key):
     recv = client_socket.recv(4096)
-
-    if key != None:
-        recv = Cipher.AES_decrypt_text(recv, key)
-        recv = str(recv, "utf-8")
+    recv = Cipher.AES_decrypt_text(recv, key)
+    recv = pickle.dumps(recv)
     sleep(0.1)
 
     return recv
 
-def Send(msg, key):
+
+def Send(receiver, type, message, key):
     global client_socket
 
-    if key != None:
-        msg = bytes(msg, "utf-8")
-        msg = Cipher.AES_encrypt_text(msg, key)
+    msg = {
+        "author": Name,
+        "receiver": receiver,
+        "type": type,
+        "message": message,
+        "timestamp": "sec.min.h.d.m.y",
+        "token": ""
+    }
 
+    msg = pickle.dumps(msg)
+    msg = Cipher.AES_encrypt_text(msg, key)
     client_socket.send(msg)
     sleep(0.1)
+
 
 def Update():
     global nachrichten
@@ -149,10 +157,12 @@ def Update():
 
     nachrichten = []
 
+
 def Send_to_client(Empfänger, msg):
     global client_socket
     global key_server
     global logs
+
     msg = msg.strip()
     if len(msg) < 1:
         print("Die Nachicht hat kein Inhalt")
@@ -160,13 +170,16 @@ def Send_to_client(Empfänger, msg):
 
     for a, b in users.items():
         if a == Empfänger:
-            Send(Empfänger, key_server)
-            Send(msg, users[Empfänger])
+            Send(receiver=Empfänger,
+                 type="message",
+                 message=msg,
+                 key=users[Empfänger])
             print("Nachicht wurde gesendet")
             logs.append(f"an {Empfänger}: {msg}")
             return
 
     print(bcolors.WARNING + "Client nicht gefunden" + bcolors.END)
+
 
 def close():
     global running
@@ -177,14 +190,17 @@ def close():
     Send("#C", key_server)
     sys.exit()
 
+
 def online():
     l = ""
     for user in users.items():
         l += user[0] + ", "
     print(l[:-2])
 
+
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
+
 
 def log():
     global logs
@@ -204,8 +220,10 @@ def help():
         Nachrichten anschauen       --> update, msg
         Löschende Nachriten an/aus  --> log
         Erreichbare Clients sehen   --> online
+
         Bildschirm säubern          --> cls
         Client schließen            --> close
+
         Hilfe (das hier) anzeigen   --> help """)
 
 
@@ -235,6 +253,7 @@ def switch(Befehl, parameter1="", parameter2=""):
     else:
         print(f"{bcolors.WARNING}Der Befehl {Befehl} ist entweder falsch geschrieben oder konnte nicht gefunden werden.{bcolors.END}")
 
+
 def connect():
     try_connect = True
     while try_connect:
@@ -249,6 +268,7 @@ def RSA_Server():
     global key_server
     global pk
     global sk
+
     pk, sk = Cipher.RSA_generate_pk_sk()
     Send(pk, None)
     key = Read(None)
@@ -275,8 +295,9 @@ def set_name():
         if recv == " ":
             break
 
+
 def main():
-    while running == True:
+    while running:
         try:
             msg = input(">>> ")
 

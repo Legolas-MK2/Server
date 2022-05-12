@@ -1,8 +1,37 @@
+
 {
-    "author": "name_ich",
-    "receiver": "name_du",
-    "type": "message",
-    "message_": "Die Nachicht",
-    "timestamp": "sec.min.h.d.m.y",
-    "token": "",
+    "message":{
+        "author": "name_ich",
+        "receiver": "name_du",
+        "type": "message",
+        "message": "Die massage",
+        "timestamp": "sec.min.h.d.m.y",
+        "token": ""
+    },
+    "login": {
+        "author": "name_ich",
+        "receiver": "name_du",
+        "type": "login",
+        "message": [],
+        "timestamp": "sec.min.h.d.m.y",
+        "token": ""
+    },
+
+    "Error": {
+        "author": "name_ich",
+        "receiver": "name_du",
+        "type": "error",
+        "message": ["Connection canceled", "wrong name"],
+        "timestamp": "sec.min.h.d.m.y",
+        "token": ""
+    },
+
+    "metadata": {
+        "author": "name_ich",
+        "receiver": "Server",
+        "type": "metadata",
+        "message": "#C",
+        "timestamp": "sec.min.h.d.m.y",
+        "token": ""
+    }
 }
