@@ -40,7 +40,7 @@ class Read_Thread(threading.Thread):
             try:
                 jsonn = self.Read(key_server)
 
-                if jsonn['type'] == "metadata":
+                if jsonn['author'] == "Server":
                     self.Server(jsonn['message'])
                     continue
 
@@ -58,19 +58,20 @@ class Read_Thread(threading.Thread):
 
         while True:
             jsonn = self.Read(key_server)
-            if jsonn['type'] == "wrong name":
-                return
-
+            if jsonn["type"] != "keys": json_wrong(); continue
+            if jsonn["type"] != "keys": json_wrong(); continue
             name = jsonn['message']['name']
             pk = jsonn['message']['pk']
+
             pk = self.int_to_bytes(int(pk))
             bkey = Cipher.generate_key(20)
             key = Cipher.RSA_encrypt(pk, bkey)
             key = str(self.bytes_to_int(key))
 
             users[name] = bkey
+
             Send(receiver=jsonn['message']['name'],
-                 type="metadata",
+                 type="keys",
                  message={"name": name,
                           "key": key},
                  key=key_server)
@@ -86,7 +87,7 @@ class Read_Thread(threading.Thread):
         elif command == "#O":
             global sk
             name = list_command["name"]
-            mode = list_command["node"]
+            mode = list_command["mode"]
             if mode == "-":
                 for user in users.items():
                     if user[0] == name:
@@ -117,9 +118,14 @@ class Read_Thread(threading.Thread):
         return x.to_bytes((x.bit_length() + 7) // 8, "little")
 
 
+def json_wrong():
+    pass
+
+
 def Read(key):
     recv = client_socket.recv(4096)
-    recv = Cipher.AES_decrypt_text(recv, key)
+    if key != None:
+        recv = Cipher.AES_decrypt_text(recv, key)
     recv = pickle.dumps(recv)
     sleep(0.1)
 
@@ -139,7 +145,8 @@ def Send(receiver, type, message, key):
     }
 
     msg = pickle.dumps(msg)
-    msg = Cipher.AES_encrypt_text(msg, key)
+    if key != None:
+        msg = Cipher.AES_encrypt_text(msg, key)
     client_socket.send(msg)
     sleep(0.1)
 
@@ -186,8 +193,10 @@ def close():
 
     print("Verbindung wird geschlossen")
     running = False
-    Send("Server", key_server)
-    Send("#C", key_server)
+    Send(receiver="Server",
+         type="metadata",
+         message="#C",
+         key=key_server)
     sys.exit()
 
 
@@ -270,9 +279,21 @@ def RSA_Server():
     global sk
 
     pk, sk = Cipher.RSA_generate_pk_sk()
-    Send(pk, None)
-    key = Read(None)
-    key_server = Cipher.RSA_decrypt(sk, key)
+    while True:
+        Send(receiver="Server",
+             type="login",
+             message={
+                 "mode": "key",
+                 "key": pk
+             },
+             key=None)
+
+        recv = Read(None)
+        if recv["type"] != "login": json_wrong(); continue
+        if recv["message"]["mode"] != "key": json_wrong(); continue
+        key = recv["message"]["key"]
+        key_server = Cipher.RSA_decrypt(sk, key)
+        break
 
 
 def set_name():
@@ -281,19 +302,29 @@ def set_name():
     while True:
         try:
             clear()
-            #sleep(1)
             Name = "a"
-            print(Name)
             Name = input("Name: ")
         except:
             continue
+
         if Name[:6] == "Server" or " " in Name or Name == "":
             Name = ""
             continue
-        Send(Name, key_server)
+
+        Send(receiver="Server",
+             type="login",
+             message={
+                "mode": "name",
+                "name": Name
+             },
+             key=key_server)
+
         recv = Read(key_server)
-        if recv == " ":
-            break
+
+        if recv["type"] != "login": json_wrong(); continue
+        if recv["massage"] == "retry": continue
+        if recv["massage"]["mode"] != "name": json_wrong(); continue
+        if recv["massage"]["name"] == Name: break
 
 
 def main():
@@ -328,9 +359,9 @@ logs = []
 users = {}
 pk = b""
 sk = b""
-max_user_parameter = 2
 Name = ""
 start = False
+
 
 if __name__ == "__main__":
     try:
@@ -341,6 +372,7 @@ if __name__ == "__main__":
         t.start()
     except:
         sys.exit(0)
+
     while start == False:
         pass
     main()

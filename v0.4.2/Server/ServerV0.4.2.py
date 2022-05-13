@@ -1,3 +1,4 @@
+import pickle
 import socket
 import threading
 from time import sleep
@@ -22,74 +23,137 @@ def start(ID,sock,addr):
     def bytes_to_int(xbytes: bytes) -> int:
         return int.from_bytes(xbytes, "little")
 
-    def Read(crypt=True):
-        sleep(0.1)
+    def Read(key):
         recv = Client.Socket.recv(4096)
-
-        if crypt:
-            recv = Cipher.AES_decrypt_text(recv, Client.key)
-            recv = str(recv, "utf-8")
+        if key != None:
+            recv = Cipher.AES_decrypt_text(recv, key)
+        recv = pickle.dumps(recv)
+        sleep(0.1)
         return recv
 
-    def Send(msg, crypt=True):
-        sleep(0.1)
-        if crypt:
-            msg = bytes(msg, "utf-8")
-            msg = Cipher.AES_encrypt_text(msg, Client.key)
+    def Send(author, receiver, type, message, key):
+        msg = {
+            "author": author,
+            "receiver": receiver,
+            "type": type,
+            "message": message,
+            "timestamp": "sec.min.h.d.m.y",
+            "token": ""
+        }
 
+        msg = pickle.dumps(msg)
+        if key != None:
+            msg = Cipher.AES_encrypt_text(msg, key)
         Client.Socket.send(msg)
+        sleep(0.1)
 
     def set_key():
-        Client.pk = Read(False)
+        recv = Read(None)
+        if recv["type"] != "login": json_wrong(); return
+        if recv["message"]["mode"] != "key": json_wrong(); return
+
+        Client.pk = recv["message"]["key"]
         Client.key = Cipher.generate_key(20)
         msg = Cipher.RSA_encrypt(Client.pk, Client.key)
-        Send(msg, False)
+
+        Send(author="Server",
+             receiver=Client.Name,
+             type="login",
+             message={
+                 "mode": "key",
+                 "key": msg
+             },
+             key=None)
 
     def get_name():
         Name = ""
         while len(Name) < 1:
-            Name = Read()
+            recv = Read(Client.key)
+            if recv["type"] != "login": json_wrong(); return
+            if recv["message"]["mode"] != "name": json_wrong(); return
+            Name = recv["message"]["name"]
 
             if Name[:6] == "Server" or " " in Name or Name == "":
                 print("name error")
-                Send("e")
+                Send(author="Server",
+                     receiver=Client.Name,
+                     type="login",
+                     message="retry",
+                     key=Client.key)
                 continue
 
             if len(ID_list) == 0:
-                Send(" ")
+                Send(author="Server",
+                     receiver=Client.Name,
+                     type="login",
+                     message={
+                         "mode": "name",
+                         "name": Name
+                     },
+                     key=Client.key)
                 print(f"{bcolors.OKGREEN}Der Nutzer {Name} hat sich eingeloggt und hat die ID {ID} bekommen{bcolors.END}")
                 return Name
 
-            continue_ = False
             for s in ID_list:
                 if ID_list[s].Name == Name:
-                    Send("e")
-                    continue_ = True
 
-            if continue_:
-                Name = ""
-                continue
+                    Send(author="Server",
+                         receiver=Client.Name,
+                         type="login",
+                         message="retry",
+                         key=Client.key)
 
-            Send(" ")
+                    Name = ""
+                    continue
+
+            Send(author="Server",
+                 receiver=Client.Name,
+                 type="login",
+                 message={
+                     "mode": "name",
+                     "name": Name
+                 },
+                 key=Client.key)
+
             print(f"{bcolors.OKGREEN}Der Nutzer {Client.Name} hat sich eingeloggt und hat die ID {ID} bekommen{bcolors.END}")
             return Name
 
     def connect_to_all():
         for client in ID_list:
             if ID_list[client].Name != Client.Name:
+                while True:
+                    pk = bytes_to_int(ID_list[client].pk)
+                    pk = str(pk)
 
-                pk = bytes_to_int(ID_list[client].pk)
-                pk = str(pk)
+                    Send(author="Server",
+                         receiver=Client.Name,
+                         type="keys",
+                         message={
+                             "name": ID_list[client].Name,
+                             "pk": pk
+                         },
+                         key=Client.key)
 
-                Client.Send(ID_list[client].Name + " " + pk)
-                recv = Read().split(" ")
-                if ID_list[client].Name == recv[0]:
-                    ID_list[client].Send("Server")
-                    ID_list[client].Send("#O + " + Client.Name + " " + recv[1])
-                else:
-                    print(f"{bcolors.WARNING}Warning: in connect_to_all")
-                    print(f"ID_list[client].Name ='{ID_list[client].Name}'")
-                    print(f"recv[0] ='{recv[0]}'{bcolors.END}")
+                    recv = Read(Client.key)
+                    if recv['type'] != "keys": json_wrong(); continue
+                    name = recv['massage']['name']
+                    key = recv['massage']['key']
+
+                    if ID_list[client].Name == name:
+                        ID_list[client].Send(author="Server",
+                                            receiver=Client.Name,
+                                            type="keys",
+                                            message={
+                                                "command": "#C",
+                                                "name": Client.Name,
+                                                "mode": key
+                                            },
+                                            key=Client.key)
+                    else:
+                        print(f"{bcolors.WARNING}Warning: in connect_to_all")
+                        print(f"ID_list[client].Name ='{ID_list[client].Name}'")
+                        print(f"name ='{name}'{bcolors.END}")
+                    break
         Send("e")
 
     def sub_from_onlinelist(name):
@@ -257,6 +321,9 @@ class client(threading.Thread):
 
     def int_to_bytes(self, x: int) -> bytes:
         return x.to_bytes((x.bit_length() + 7) // 8, "little")
+
+def json_wrong():
+    pass
 
 temp = {}
 ID_list = {}
