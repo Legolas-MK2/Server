@@ -27,7 +27,7 @@ def start(ID,sock,addr):
         recv = Client.Socket.recv(4096)
         if key != None:
             recv = Cipher.AES_decrypt_text(recv, key)
-        recv = pickle.dumps(recv)
+        recv = pickle.loads(recv)
         sleep(0.1)
         return recv
 
@@ -136,25 +136,26 @@ def start(ID,sock,addr):
 
                     recv = Read(Client.key)
                     if recv['type'] != "keys": json_wrong(); continue
-                    name = recv['massage']['name']
-                    key = recv['massage']['key']
+                    name = recv['message']['name']
+                    key = recv['message']['key']
 
                     if ID_list[client].Name == name:
                         ID_list[client].Send(author="Server",
                                             receiver=Client.Name,
-                                            type="keys",
+                                            type="online",
                                             message={
-                                                "command": "#C",
+                                                "command": "#O",
                                                 "name": Client.Name,
-                                                "mode": key
+                                                "mode": "+",
+                                                "key": key
                                             },
                                             key=Client.key)
+
                     else:
                         print(f"{bcolors.WARNING}Warning: in connect_to_all")
                         print(f"ID_list[client].Name ='{ID_list[client].Name}'")
                         print(f"name ='{name}'{bcolors.END}")
                     break
-        Send("e")
 
     def sub_from_onlinelist(name):
         global ID_list
@@ -164,29 +165,41 @@ def start(ID,sock,addr):
 
         for s in ID_list:
             try:
-                ID_list[s].Send("Server")
-                ID_list[s].Send("#O - " + name)
+                ID_list[s].Send(author="Server",
+                                     receiver=Client.Name,
+                                     type="online",
+                                     message={
+                                         "command": "#O",
+                                         "name": name,
+                                         "mode": "-",
+                                     },
+                                     key=Client.key)
             except:
                 pass
 
     Client = client()
     def main():
-        try:
-            Client.Socket = sock
-            Client.ID = ID
-            Client.addr = addr
-            set_key()
+        #try:
+        Client.Socket = sock
+        Client.ID = ID
+        Client.addr = addr
+        print(1)
+        set_key()
+        print(2)
 
-            Client.Name = get_name()
-            connect_to_all()
-
-            ID_list[ID] = Client
-            ID_list[ID].start()
+        Client.Name = get_name()
+        print(3)
+        connect_to_all()
+        print(4)
+        ID_list[ID] = Client
+        ID_list[ID].start()
+        print(5)
+        """
         except:
             print(f"{bcolors.FAIL}die Verbindung zu dem Client {Client.Name if len(Client.Name) > 0 else ID} wurde verloren{bcolors.END}")
             temp.pop(ID)
             sub_from_onlinelist(Client.Name)
-
+        """
     main()
 
 
@@ -205,35 +218,37 @@ class client(threading.Thread):
         self.pk = None
         self.Kontakte = {} #[online] schreiben; [anstehent] anfrage annhemen
 
-    def Read(self, crypt=True):
-
+    def Read(self, key):
         recv = self.Socket.recv(4096)
-        if crypt:
-            recv = Cipher.AES_decrypt_text(recv, self.key)
-            recv = str(recv, "utf-8")
-
+        if key != None:
+            recv = Cipher.AES_decrypt_text(recv, key)
+        recv = pickle.loads(recv)
         sleep(0.1)
         return recv
 
-    def Send_von(self, Sender, msg):
-        self.Send(Sender)
-        self.Send(msg, False)
+    def Send(self, author, receiver, type, message, key):
+        msg = {
+            "author": author,
+            "receiver": receiver,
+            "type": type,
+            "message": message,
+            "timestamp": "sec.min.h.d.m.y",
+            "token": ""
+        }
 
-    def Send(self, msg, crypt=True):
-        sleep(0.1)
-        if crypt:
-            msg = bytes(msg, "utf-8")
-            msg = Cipher.AES_encrypt_text(msg, self.key)
-
+        msg = pickle.dumps(msg)
+        if key != None:
+            msg = Cipher.AES_encrypt_text(msg, key)
         self.Socket.send(msg)
+        sleep(0.1)
 
     def run(self):
-        try:
-            self.running = True
-            while self.running:
-                recv = self.Read()
-                self.data_Transfer(recv)
-        except:
+        #try:
+        self.running = True
+        while self.running:
+            recv = self.Read(self.key)
+            self.data_Transfer(recv)
+        """except:
             print(f"{bcolors.FAIL}die Verbindung zu dem Client {self.Name if len(self.Name)> 0 else self.ID} wurde verloren{bcolors.END}")
 
             self.running = False
@@ -242,14 +257,19 @@ class client(threading.Thread):
             if temp[self.ID]:
                 temp.pop(self.ID)
 
-        print(f"Der Thread vom Client {self.Name if len(self.Name)> 0 else self.ID} hat sich geschlossen")
+        print(f"Der Thread vom Client {self.Name if len(self.Name)> 0 else self.ID} hat sich geschlossen")"""
 
-    def ask_Server(self, parameter):
-        if parameter == '#C':
+    def ask_Server(self, list_command):
+        print(list_command)
+        command = list_command["command"]
+        if command == '#C':
             print(f"Der Client {self.Name} wird geschlossen")
 
-            self.Send("Server")
-            self.Send("#C")
+            self.Send(author="Server",
+                 receiver=self.Name,
+                 type="metadata",
+                 message="#C",
+                 key=self.key)
 
             self.running = False
             self.sub_from_onlinelist(self.Name)
@@ -258,50 +278,38 @@ class client(threading.Thread):
             ID_list.pop(self.ID)
             temp.pop(self.ID)
 
-        elif parameter == "#O":
+        elif command == "#O":
             pass
         else:
-            print(f"{bcolors.WARNING}Der Client {self.Name} hat versucht an den Server die Nachicht '{parameter}' zusenden ohne das der Server eine Antwort hat{bcolors.END}")
+            print(f"{bcolors.WARNING}Der Client {self.Name} hat versucht an den Server die Nachicht '{command}' zusenden ohne das der Server eine Antwort hat{bcolors.END}")
 
-    def data_Transfer(self, Empfänger_Name):
-        if Empfänger_Name == "Server":
-            msg = self.Read()
-            self.ask_Server(msg)
+    def data_Transfer(self, msg):
+        if msg['receiver'] == "Server":
+            self.ask_Server(msg['message'])
             return
 
-        msg = self.Read(False)
         exist = False
 
         if len(msg) == 0:
             return
 
         for s in ID_list:
-            if ID_list[s].Name == Empfänger_Name:
+            if ID_list[s].Name == msg['receiver']:
                 Empfänger_ID = s
                 exist = True
                 break
 
         if not exist:
-            print(f"{bcolors.WARNING}Der Client {Empfänger_Name} existiert nicht{bcolors.END}")
+            print(f"{bcolors.WARNING}Der Client {msg['receiver']} existiert nicht{bcolors.END}")
             return
 
-        print(f"{self.Name} --> {Empfänger_Name}")
+        print(f"{self.Name} --> {msg['receiver']}")
         print("msg ->", msg)
-        ID_list[Empfänger_ID].Send_von(self.Name, msg)
-
-    def add_to_onlinelist(self, name):
-        global ID_list
-
-        if len(name) < 1:
-            return
-
-        for s in ID_list:
-            try:
-                key = str(self.bytes_to_int(self.pk))
-                ID_list[s].Send("Server")
-                ID_list[s].Send("#O + " + name + " " + key)
-            except:
-                pass
+        ID_list[Empfänger_ID].Send(author=self.name,
+                                receiver=msg['receiver'],
+                                type="online",
+                                message=msg,
+                                key=None)
 
     def sub_from_onlinelist(self, name):
         global ID_list
@@ -311,8 +319,15 @@ class client(threading.Thread):
 
         for s in ID_list:
             try:
-                ID_list[s].Send("Server")
-                ID_list[s].Send("#O - " + name)
+                ID_list[s].Send(author="Server",
+                                receiver=name,
+                                type="online",
+                                message={
+                                    "command": "#O",
+                                    "name": name,
+                                    "mode": "-",
+                                },
+                                key=self.key)
             except:
                 pass
 

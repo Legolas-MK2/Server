@@ -1,4 +1,5 @@
 import pickle
+import time
 from time import sleep
 import threading
 import Cipher
@@ -23,18 +24,18 @@ class Read_Thread(threading.Thread):
     global nachrichten
     global running
     global key_server
-    global key_client
 
     def __init__(self, socket):
         threading.Thread.__init__(self)
         self.socket = socket
+        print(6)
 
     def run(self):
         global running
         global start
-
+        print(7)
         self.set_keys()
-
+        print(8)
         start = True
         while running:
             try:
@@ -47,7 +48,7 @@ class Read_Thread(threading.Thread):
                 for user in users.items():
                     if jsonn['receiver'] in user[0]:
                         nachrichten.append(f"von {jsonn['receiver']}: " + jsonn['message'])
-                        logs.append(f"von {jsonn['receiver']}: " + jsonn['massage'])
+                        logs.append(f"von {jsonn['receiver']}: " + jsonn['message'])
 
             except Exception as e:
                 running = False
@@ -57,12 +58,13 @@ class Read_Thread(threading.Thread):
         users[Name] = Cipher.generate_key(20)
 
         while True:
+            print(9)
             jsonn = self.Read(key_server)
+            print(10)
             if jsonn["type"] != "keys": json_wrong(); continue
             if jsonn["type"] != "keys": json_wrong(); continue
             name = jsonn['message']['name']
             pk = jsonn['message']['pk']
-
             pk = self.int_to_bytes(int(pk))
             bkey = Cipher.generate_key(20)
             key = Cipher.RSA_encrypt(pk, bkey)
@@ -78,8 +80,9 @@ class Read_Thread(threading.Thread):
 
     def Server(self, list_command):
         global running
+        print(list_command)
         command = list_command["command"]
-
+        print(command)
         if command == "#C" and running == False:
             client_socket.close()
             print("Die Verbindung wurde geschlossen")
@@ -106,7 +109,7 @@ class Read_Thread(threading.Thread):
     def Read(self, key):
         recv = client_socket.recv(4096)
         recv = Cipher.AES_decrypt_text(recv, key)
-        recv = pickle.dumps(recv)
+        recv = pickle.loads(recv)
         return recv
 
     @staticmethod
@@ -126,7 +129,7 @@ def Read(key):
     recv = client_socket.recv(4096)
     if key != None:
         recv = Cipher.AES_decrypt_text(recv, key)
-    recv = pickle.dumps(recv)
+    recv = pickle.loads(recv)
     sleep(0.1)
 
     return recv
@@ -148,6 +151,8 @@ def Send(receiver, type, message, key):
     if key != None:
         msg = Cipher.AES_encrypt_text(msg, key)
     client_socket.send(msg)
+    print(msg)
+    print(key)
     sleep(0.1)
 
 
@@ -195,7 +200,7 @@ def close():
     running = False
     Send(receiver="Server",
          type="metadata",
-         message="#C",
+         message={"command": "#C"},
          key=key_server)
     sys.exit()
 
@@ -322,9 +327,9 @@ def set_name():
         recv = Read(key_server)
 
         if recv["type"] != "login": json_wrong(); continue
-        if recv["massage"] == "retry": continue
-        if recv["massage"]["mode"] != "name": json_wrong(); continue
-        if recv["massage"]["name"] == Name: break
+        if recv["message"] == "retry": continue
+        if recv["message"]["mode"] != "name": json_wrong(); continue
+        if recv["message"]["name"] == Name: break
 
 
 def main():
@@ -350,7 +355,6 @@ def main():
 
 
 # Global Variable
-key_client = b'\x9c\x98l0\xe4\xddPJ\xd5\x96\xfb\x83\xb9\x08\xb4\x1e'
 key_server = None
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 running = True
@@ -364,15 +368,17 @@ start = False
 
 
 if __name__ == "__main__":
-    try:
-        connect()
-        RSA_Server()
-        set_name()
-        t = Read_Thread(client_socket)
-        t.start()
-    except:
-        sys.exit(0)
+    print(1)
+    connect()
+    print(2)
+    RSA_Server()
+    print(3)
+    set_name()
+    print(4)
+    t = Read_Thread(client_socket)
+    t.start()
+    print(5)
 
-    while start == False:
-        pass
+    #while start == False:
+        #time.sleep(0.5)
     main()
