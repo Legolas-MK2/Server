@@ -93,7 +93,6 @@ def start(ID,sock,addr):
                      key=Client.key)
                 print(f"{bcolors.OKGREEN}Der Nutzer {Name} hat sich eingeloggt und hat die ID {ID} bekommen{bcolors.END}")
                 return Name
-
             for s in ID_list:
                 if ID_list[s].Name == Name:
 
@@ -156,6 +155,11 @@ def start(ID,sock,addr):
                         print(f"ID_list[client].Name ='{ID_list[client].Name}'")
                         print(f"name ='{name}'{bcolors.END}")
                     break
+        Send(author="Server",
+             receiver=Client.Name,
+             type="keys",
+             message="end",
+             key=Client.key)
 
     def sub_from_onlinelist(name):
         global ID_list
@@ -179,27 +183,20 @@ def start(ID,sock,addr):
 
     Client = client()
     def main():
-        #try:
-        Client.Socket = sock
-        Client.ID = ID
-        Client.addr = addr
-        print(1)
-        set_key()
-        print(2)
+        try:
+            Client.Socket = sock
+            Client.ID = ID
+            Client.addr = addr
+            set_key()
 
-        Client.Name = get_name()
-        print(3)
-        connect_to_all()
-        print(4)
-        ID_list[ID] = Client
-        ID_list[ID].start()
-        print(5)
-        """
+            Client.Name = get_name()
+            connect_to_all()
+            ID_list[ID] = Client
+            ID_list[ID].start()
         except:
             print(f"{bcolors.FAIL}die Verbindung zu dem Client {Client.Name if len(Client.Name) > 0 else ID} wurde verloren{bcolors.END}")
             temp.pop(ID)
             sub_from_onlinelist(Client.Name)
-        """
     main()
 
 
@@ -243,12 +240,12 @@ class client(threading.Thread):
         sleep(0.1)
 
     def run(self):
-        #try:
-        self.running = True
-        while self.running:
-            recv = self.Read(self.key)
-            self.data_Transfer(recv)
-        """except:
+        try:
+            self.running = True
+            while self.running:
+                recv = self.Read(self.key)
+                self.data_Transfer(recv)
+        except:
             print(f"{bcolors.FAIL}die Verbindung zu dem Client {self.Name if len(self.Name)> 0 else self.ID} wurde verloren{bcolors.END}")
 
             self.running = False
@@ -257,10 +254,9 @@ class client(threading.Thread):
             if temp[self.ID]:
                 temp.pop(self.ID)
 
-        print(f"Der Thread vom Client {self.Name if len(self.Name)> 0 else self.ID} hat sich geschlossen")"""
+        print(f"Der Thread vom Client {self.Name if len(self.Name)> 0 else self.ID} hat sich geschlossen")
 
     def ask_Server(self, list_command):
-        print(list_command)
         command = list_command["command"]
         if command == '#C':
             print(f"Der Client {self.Name} wird geschlossen")
@@ -268,7 +264,7 @@ class client(threading.Thread):
             self.Send(author="Server",
                  receiver=self.Name,
                  type="metadata",
-                 message="#C",
+                 message={"command": "#C"},
                  key=self.key)
 
             self.running = False
@@ -305,11 +301,11 @@ class client(threading.Thread):
 
         print(f"{self.Name} --> {msg['receiver']}")
         print("msg ->", msg)
-        ID_list[Empfänger_ID].Send(author=self.name,
+        ID_list[Empfänger_ID].Send(author=self.Name,
                                 receiver=msg['receiver'],
-                                type="online",
-                                message=msg,
-                                key=None)
+                                type="message",
+                                message=msg["message"],
+                                key=self.key)
 
     def sub_from_onlinelist(self, name):
         global ID_list
@@ -342,12 +338,13 @@ def json_wrong():
 
 temp = {}
 ID_list = {}
-#TODO name_list = {}
+ip = "127.0.0.1"
+port = 5000
 
 if __name__ == '__main__':
     Nutzer_max = 10
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(("127.0.0.1", 5000))
+    server_socket.bind((ip, port))
     server_socket.listen(Nutzer_max)
 
     for i in range(0, Nutzer_max):

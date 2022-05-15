@@ -28,39 +28,31 @@ class Read_Thread(threading.Thread):
     def __init__(self, socket):
         threading.Thread.__init__(self)
         self.socket = socket
-        print(6)
 
     def run(self):
         global running
-        global start
-        print(7)
-        self.set_keys()
-        print(8)
-        start = True
+        self.set_client_keys()
+        running = True
         while running:
-            try:
-                jsonn = self.Read(key_server)
+            #try:
+            jsonn = self.Read(key_server)
+            if jsonn['author'] == "Server":
+                self.Server(jsonn['message'])
+                continue
 
-                if jsonn['author'] == "Server":
-                    self.Server(jsonn['message'])
-                    continue
-
-                for user in users.items():
-                    if jsonn['receiver'] in user[0]:
-                        nachrichten.append(f"von {jsonn['receiver']}: " + jsonn['message'])
-                        logs.append(f"von {jsonn['receiver']}: " + jsonn['message'])
-
-            except Exception as e:
+            if jsonn['receiver'] in users:
+                nachrichten.append(f"von {jsonn['receiver']}: {jsonn['message']}")
+                logs.append(f"von {jsonn['receiver']}: {jsonn['message']}")
+            """except Exception as e:
                 running = False
-                print(bcolors.FAIL + "\n\nThread wurde Abgebrochen\nexcept: " + str(e) + bcolors.END)
+                print(bcolors.FAIL + "\n\nThread wurde Abgebrochen\nexcept: " + str(e) + bcolors.END)"""
 
-    def set_keys(self):
+    def set_client_keys(self):
         users[Name] = Cipher.generate_key(20)
 
         while True:
-            print(9)
             jsonn = self.Read(key_server)
-            print(10)
+            if jsonn["message"] == "end": break
             if jsonn["type"] != "keys": json_wrong(); continue
             if jsonn["type"] != "keys": json_wrong(); continue
             name = jsonn['message']['name']
@@ -80,9 +72,8 @@ class Read_Thread(threading.Thread):
 
     def Server(self, list_command):
         global running
-        print(list_command)
+
         command = list_command["command"]
-        print(command)
         if command == "#C" and running == False:
             client_socket.close()
             print("Die Verbindung wurde geschlossen")
@@ -107,7 +98,9 @@ class Read_Thread(threading.Thread):
             print(bcolors.WARNING + command + " wurde vom Server gesendet ohne es zuverarbeiten" + bcolors.END)
 
     def Read(self, key):
+        print(key)
         recv = client_socket.recv(4096)
+        print("recv:", recv)
         recv = Cipher.AES_decrypt_text(recv, key)
         recv = pickle.loads(recv)
         return recv
@@ -122,6 +115,7 @@ class Read_Thread(threading.Thread):
 
 
 def json_wrong():
+    print("json fehler gefunden")
     pass
 
 
@@ -151,8 +145,6 @@ def Send(receiver, type, message, key):
     if key != None:
         msg = Cipher.AES_encrypt_text(msg, key)
     client_socket.send(msg)
-    print(msg)
-    print(key)
     sleep(0.1)
 
 
@@ -185,7 +177,7 @@ def Send_to_client(Empfänger, msg):
             Send(receiver=Empfänger,
                  type="message",
                  message=msg,
-                 key=users[Empfänger])
+                 key=key_server)
             print("Nachicht wurde gesendet")
             logs.append(f"an {Empfänger}: {msg}")
             return
@@ -230,7 +222,7 @@ def log():
 
 def help():
     print("""Vielen Dank dass sie sich für den Hilfecommand Entschieden haben. Wir wünschen ihnen einen schönen Tag noch mit den folgenden Commands :)
-        Nachrichten senden          --> send [Empfänger] Nachricht
+        Nachrichten senden          --> send [Empfänger] [Nachricht]
         Nachrichten anschauen       --> update, msg
         Löschende Nachriten an/aus  --> log
         Erreichbare Clients sehen   --> online
@@ -265,6 +257,8 @@ def switch(Befehl, parameter1="", parameter2=""):
     elif Befehl in Befehl_help:
         help()
     else:
+        if Befehl == "":
+            return
         print(f"{bcolors.WARNING}Der Befehl {Befehl} ist entweder falsch geschrieben oder konnte nicht gefunden werden.{bcolors.END}")
 
 
@@ -278,7 +272,7 @@ def connect():
             print(bcolors.WARNING + "Kein Server gefunden" + bcolors.END)
 
 
-def RSA_Server():
+def set_server_key():
     global key_server
     global pk
     global sk
@@ -301,35 +295,35 @@ def RSA_Server():
         break
 
 
-def set_name():
+def get_name():
     global Name
 
     while True:
         try:
             clear()
-            Name = "a"
-            Name = input("Name: ")
+            name = input("Name: ")
         except:
             continue
 
-        if Name[:6] == "Server" or " " in Name or Name == "":
-            Name = ""
+        if name[:6] == "Server" or " " in name or name == "":
+            name = ""
             continue
 
         Send(receiver="Server",
              type="login",
              message={
                 "mode": "name",
-                "name": Name
+                "name": name
              },
              key=key_server)
 
         recv = Read(key_server)
-
         if recv["type"] != "login": json_wrong(); continue
         if recv["message"] == "retry": continue
         if recv["message"]["mode"] != "name": json_wrong(); continue
-        if recv["message"]["name"] == Name: break
+        if recv["message"]["name"] == name: break
+
+    return name
 
 
 def main():
@@ -348,37 +342,33 @@ def main():
             msg.pop(0)
             msg = " ".join(msg)
             switch(Befehl=Befehl.lower(), parameter1=Empfänger, parameter2=msg)
-
         except:
             if running == True:
                 print(bcolors.WARNING + "Es gab ein Fehler bei dem Input" + bcolors.END)
 
 
 # Global Variable
-key_server = None
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-running = True
+users = {}
 nachrichten = []
 logs = []
-users = {}
+ziel_port = 5000
+running = True
+ziel_ip = "127.0.0.1"
+Name = ""
+key_server = b""
 pk = b""
 sk = b""
-Name = ""
-start = False
 
 
 if __name__ == "__main__":
-    print(1)
+    running = True
+
     connect()
-    print(2)
-    RSA_Server()
-    print(3)
-    set_name()
-    print(4)
+    set_server_key()
+    Name = get_name()
+
     t = Read_Thread(client_socket)
     t.start()
-    print(5)
 
-    #while start == False:
-        #time.sleep(0.5)
     main()
