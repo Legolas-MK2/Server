@@ -40,10 +40,10 @@ def start(ID,sock,addr):
             "timestamp": "sec.min.h.d.m.y",
             "token": ""
         }
-
         msg = pickle.dumps(msg)
         if key != None:
             msg = Cipher.AES_encrypt_text(msg, key)
+        print(f"@:{receiver}, von:{author}, msg:{msg}:msg")
         Client.Socket.send(msg)
         sleep(0.1)
 
@@ -97,7 +97,7 @@ def start(ID,sock,addr):
                 if ID_list[s].Name == Name:
 
                     Send(author="Server",
-                         receiver=Client.Name,
+                         receiver=Name,
                          type="login",
                          message="retry",
                          key=Client.key)
@@ -106,7 +106,7 @@ def start(ID,sock,addr):
                     continue
 
             Send(author="Server",
-                 receiver=Client.Name,
+                 receiver=Name,
                  type="login",
                  message={
                      "mode": "name",
@@ -114,7 +114,7 @@ def start(ID,sock,addr):
                  },
                  key=Client.key)
 
-            print(f"{bcolors.OKGREEN}Der Nutzer {Client.Name} hat sich eingeloggt und hat die ID {ID} bekommen{bcolors.END}")
+            print(f"{bcolors.OKGREEN}Der Nutzer {Name} hat sich eingeloggt und hat die ID {ID} bekommen{bcolors.END}")
             return Name
 
     def connect_to_all():
@@ -232,10 +232,15 @@ class client(threading.Thread):
             "timestamp": "sec.min.h.d.m.y",
             "token": ""
         }
-
+        print(f"@:{receiver}, von:{author},key{key}, msg:{msg}:msg")
         msg = pickle.dumps(msg)
         if key != None:
             msg = Cipher.AES_encrypt_text(msg, key)
+            print("crypt")
+        else:
+            print("no crypt")
+        print(f"@:{receiver}, von:{author}, msg:{msg}:msg")
+
         self.Socket.send(msg)
         sleep(0.1)
 

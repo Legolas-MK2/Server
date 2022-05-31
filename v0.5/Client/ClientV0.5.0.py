@@ -36,6 +36,7 @@ class Read_Thread(threading.Thread):
         while running:
             #try:
             jsonn = self.Read(key_server)
+            print("json = ", jsonn)
             if jsonn['author'] == "Server":
                 self.Server(jsonn['message'])
                 continue
@@ -72,7 +73,7 @@ class Read_Thread(threading.Thread):
 
     def Server(self, list_command):
         global running
-
+        print(list_command)
         command = list_command["command"]
         if command == "#C" and running == False:
             client_socket.close()
@@ -98,9 +99,11 @@ class Read_Thread(threading.Thread):
             print(bcolors.WARNING + command + " wurde vom Server gesendet ohne es zuverarbeiten" + bcolors.END)
 
     def Read(self, key):
-        print(key)
         recv = client_socket.recv(4096)
-        print("recv:", recv)
+        print(r"\/  \/  \/  \/  \/  \/ ")
+        print(recv)
+        print(r"/\  /\  /\  /\  /\  /\ ")
+        sleep(1)
         recv = Cipher.AES_decrypt_text(recv, key)
         recv = pickle.loads(recv)
         return recv
@@ -121,6 +124,9 @@ def json_wrong():
 
 def Read(key):
     recv = client_socket.recv(4096)
+    print(r"\/  \/  \/  \/  \/  \/ ")
+    print(recv)
+    print(r"/\  /\  /\  /\  /\  /\ ")
     if key != None:
         recv = Cipher.AES_decrypt_text(recv, key)
     recv = pickle.loads(recv)
