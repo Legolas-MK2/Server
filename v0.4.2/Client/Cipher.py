@@ -12,17 +12,20 @@ def RSA_generate_pk_sk():
     key = RSA.generate(1024)
     return key.publickey().exportKey('PEM'), key.exportKey(format="PEM")
 
+
 def RSA_encrypt(pk, msg):
     pk = RSA.importKey(pk)
     cipher = PKCS1_OAEP.new(pk)
     c = cipher.encrypt(msg)
     return c
 
+
 def RSA_decrypt(sk, c):
     sk = RSA.importKey(sk)
     cipher = PKCS1_OAEP.new(sk)
     m = cipher.decrypt(c)
     return m
+
 
 def AES_encrypt_file(filename, key):
     global chunks
@@ -42,6 +45,7 @@ def AES_encrypt_file(filename, key):
                     chunk += b' ' * (16 - (len(chunk) % 16))
                 f_output.write(entcryptor.encrypt(chunk))
 
+
 def AES_decrypt_file(filename, key):
     global chunks
     out_file_name = filename.split("-")[-1]
@@ -57,19 +61,23 @@ def AES_decrypt_file(filename, key):
                 f_output.write(decryptor.decrypt(chunk))
                 f_output.truncate(filesize)
 
+
 def AES_encrypt_text(data, key):
     vector = Random.get_random_bytes(AES.block_size)
     encryption_cipher = AES.new(key, AES.MODE_CBC, vector)
     return vector + encryption_cipher.encrypt(pad(data, AES.block_size))
+
 
 def AES_decrypt_text(data, key):
     file_vector = data[:AES.block_size]
     decryption_cipher = AES.new(key, AES.MODE_CBC, file_vector)
     return unpad(decryption_cipher.decrypt(data[AES.block_size:]), AES.block_size)
 
+
 def AES_get_key(passwort):
     hashing = SHA512.new(passwort.encode("utf-8"))
     return hashing.digest()
+
 
 def generate_key(size):
     return md5(Random.get_random_bytes(size)).digest()
