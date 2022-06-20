@@ -4,7 +4,7 @@ from time import sleep
 # own module
 import Cipher
 
-key_server = bytes
+
 encoding = "utf-8"
 buffer_recv = 4096
 

@@ -86,14 +86,14 @@ def generate_key(size):
 chunks = 32 * 1024
 if __name__ == "__main__":
     #AES
-    key = b'\xcf\xb5\x90K0rs+\x04\xd5q\x10\xa5?T\x85'
-    crypt_text = AES_encrypt_text(data=b"das ist eine nachicht", key=key)
+    key = b'r\xce\xdbP\xd4\xb7G\xfc\x04H82\x96\xd24\x17'
+    crypt_text = AES_encrypt_text(data=b"dawl", key=key)
     print(crypt_text)
     print(AES_decrypt_text(crypt_text, key=key))
-
+    """
     #RSA
     pk, sk = RSA_generate_pk_sk()
     c = RSA_encrypt(pk, b"a")
     print(c)
     m = RSA_decrypt(sk, c)
-    print(m)
+    print(m)"""

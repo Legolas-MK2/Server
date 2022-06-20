@@ -13,7 +13,6 @@ def connect(objekt_socket):
     sock = None
     while not sock:
         sock = objekt_socket.try_connect(ip, port)
-    return sock
 
 
 def get_key_server(sock):

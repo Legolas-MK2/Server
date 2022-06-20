@@ -1,3 +1,4 @@
+import time
 from time import sleep
 import threading
 import Cipher
@@ -10,6 +11,7 @@ from Socket import My_Socket
 
 
 class bcolors:
+    """
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'
     OKCYAN = '\033[96m'
@@ -19,16 +21,26 @@ class bcolors:
     END = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+    """
+    HEADER = ''
+    OKBLUE = ''
+    OKCYAN = ''
+    OKGREEN = ''
+    WARNING = ''
+    FAIL = ''
+    END = ''
+    BOLD = ''
+    UNDERLINE = ''
 
 
 class Read_Thread(threading.Thread):
     global nachrichten
     global running
     global key_server
+    global sock
 
-    def __init__(self, socket):
+    def __init__(self):
         threading.Thread.__init__(self)
-        self.socket = socket
 
     def run(self):
         global running
@@ -37,49 +49,49 @@ class Read_Thread(threading.Thread):
 
         start = True
         while running:
-            try:
-                Sender = self.Read(key_server)
-                if len(Sender) == 0:
-                    continue
+            #try:
+            Sender = sock.read()
+            if len(Sender) == 0:
+                continue
 
-                if Sender == "Server":
-                    recv = self.Read(key_server).split(" ")
-                    self.Server(recv)
-                    continue
+            if Sender == "Server":
+                recv = sock.read().split(" ")
+                self.Server(recv)
+                continue
 
-                for user in users.items():
-                    if Sender in user[0]:
-                        recv = self.Read(users[Sender])
-                        recv = recv.split(" ")
-                        msg = " ".join(recv)
+            for user in users.items():
+                if Sender in user[0]:
+                    recv = sock.read(False)
+                    msg = Cipher.AES_decrypt_text(recv, users[Sender])
+                    msg = str(msg, "utf-8")
+                    nachrichten.append(f"von {Sender}: " + msg)
+                    logs.append(f"von {Sender}: " + msg)
 
-                        nachrichten.append(f"von {Sender}: " + msg)
-                        logs.append(f"von {Sender}: " + msg)
-
-            except Exception as e:
+            """except Exception as e:
                 running = False
-                print(bcolors.FAIL + "\n\nThread wurde Abgebrochen\nexcept: " + str(e) + bcolors.END)
+                print(bcolors.FAIL + "\n\nThread wurde Abgebrochen\nexcept: " + str(e) + bcolors.END)"""
 
     def set_keys(self):
         users[username] = Cipher.generate_key(20)
         while True:
-            recv = self.Read(key_server)
+            recv = sock.read()
             if recv == "e":
                 return
             recv = recv.split(" ")
             name = recv[0]
             pk = recv[1]
+
             pk = self.int_to_bytes(int(pk))
             bkey = Cipher.generate_key(20)
             key = Cipher.RSA_encrypt(pk, bkey)
             key = str(self.bytes_to_int(key))
             users[name] = bkey
 
-            Send(f"{name} {key}", key_server)
+            sock.send(f"{name} {key}", key_server)
 
     def Server(self, command):
         global running
-        if command[0] == "#C" and running == False:
+        if command[0] == "#C" and not running:
             sock.close()
             print("Die Verbindung wurde geschlossen")
             sys.exit()
@@ -98,20 +110,9 @@ class Read_Thread(threading.Thread):
                 key = command[3]
                 key = self.int_to_bytes(int(key))
                 key = Cipher.RSA_decrypt(sk, key)
-                print("user:", user_name)
                 users[user_name] = key
-            elif mode == "add":
-
-                pass
             else:
-                print(bcolors.WARNING + command + " Wurde vom Server gesendet ohne es zuverarbeiten" + bcolors.END)
-
-    def Read(self, key):
-        recv = sock.recv(4096)
-        if key != "":
-            recv = Cipher.AES_decrypt_text(recv, key)
-            recv = str(recv, "utf-8")
-        return recv
+                print(bcolors.WARNING + command + " Wurde vom Server gesendet ohne es zu verarbeiten" + bcolors.END)
 
     def bytes_to_int(self, xbytes: bytes) -> int:
         return int.from_bytes(xbytes, "little")
@@ -119,31 +120,12 @@ class Read_Thread(threading.Thread):
     def int_to_bytes(self, x: int) -> bytes:
         return x.to_bytes((x.bit_length() + 7) // 8, "little")
 
-def Read(key):
-    recv = sock.recv(4096)
-
-    if key != None:
-        recv = Cipher.AES_decrypt_text(recv, key)
-        recv = str(recv, "utf-8")
-    sleep(0.1)
-
-    return recv
-
-
-def Send(msg, key):
-
-    if key != None:
-        msg = bytes(msg, "utf-8")
-        msg = Cipher.AES_encrypt_text(msg, key)
-
-    sock.send(msg)
-    sleep(0.1)
 
 def Update():
     global nachrichten
 
     if len(nachrichten) == 0:
-        print("Keine neuen Nachichten bekommen")
+        print("Keine neuen Nachrichten bekommen")
         return
 
     print(len(nachrichten), "neue Nachrichten")
@@ -152,20 +134,26 @@ def Update():
 
     nachrichten = []
 
+
 def Send_to_client(Empfänger, msg):
     global key_server
     global logs
     msg = msg.strip()
     if len(msg) < 1:
-        print("Die Nachicht hat kein Inhalt")
+        print("Die Nachricht hat kein Inhalt")
         return
 
     for a, b in users.items():
         if a == Empfänger:
-            Send(Empfänger, key_server)
-            Send(msg, users[Empfänger])
-            print("Nachicht wurde gesendet")
             logs.append(f"an {Empfänger}: {msg}")
+
+            msg = bytes(msg, "utf-8")
+            msg = Cipher.AES_encrypt_text(msg, users[Empfänger])
+
+            sock.send(Empfänger)
+            sock.send(msg, False)
+
+            print("Nachricht wurde gesendet")
             return
 
     print(bcolors.WARNING + "Client nicht gefunden die verfügbaren sind" + bcolors.END)
@@ -176,9 +164,10 @@ def close():
 
     print("Verbindung wird geschlossen")
     running = False
-    Send("Server", key_server)
-    Send("#C", key_server)
+    sock.send("Server")
+    sock.send("#C")
     sys.exit()
+
 
 def online():
     l = ""
@@ -186,14 +175,16 @@ def online():
         l += user[0] + ", "
     print(l[:-2])
 
+
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
+
 
 def log():
     global logs
 
     if len(logs) < 1:
-        print("Keine Nachichten bekommen")
+        print("Keine Nachricht bekommen")
         return
 
     print(len(logs), "Nachrichten")
@@ -203,13 +194,13 @@ def log():
 
 def help():
     print("""Vielen Dank dass sie sich für den Hilfecommand Entschieden haben. Wir wünschen ihnen einen schönen Tag noch mit den folgenden Commands :)
-        Nachrichten senden          --> send [Empfänger] Nachricht
-        Nachrichten anschauen       --> update, msg
-        Löschende Nachriten an/aus  --> log
-        Erreichbare Clients sehen   --> online
-        Bildschirm säubern          --> cls
-        Client schließen            --> close
-        Hilfe (das hier) anzeigen   --> help """)
+        Nachrichten senden           --> send [Empfänger] Nachricht
+        Nachrichten anschauen        --> update, msg
+        Löschende Nachrichten an/aus --> log
+        Erreichbare Clients sehen    --> online
+        Bildschirm säubern           --> cls
+        Client schließen             --> close
+        Hilfe (das hier) anzeigen    --> help """)
 
 
 def switch(Befehl, parameter1="", parameter2=""):
@@ -278,12 +269,12 @@ start = False
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 if __name__ == "__main__":
-    objekt_socket = My_Socket(sock)
-    sock = Login.connect(objekt_socket)
-    sk, pk, key_server = Login.get_key_server(objekt_socket)
-    objekt_socket.key = key_server
-    username = Login.get_name(objekt_socket)
-    t = Read_Thread(sock)
+    sock = My_Socket(sock)
+    Login.connect(sock)
+    pk, sk, key_server = Login.get_key_server(sock)
+    sock.key = key_server
+    username = Login.get_name(sock)
+    t = Read_Thread()
     t.start()
 
     while not start:
