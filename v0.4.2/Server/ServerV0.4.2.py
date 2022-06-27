@@ -1,7 +1,12 @@
+#TODO ID system löschen
+#TODO def start löscchen
+#TODO multi dateien
+
 import socket
 import threading
 from time import sleep
 import Cipher
+
 
 class bcolors:
     HEADER = '\033[95m'
@@ -14,7 +19,8 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
-def start(ID,sock,addr):
+
+def start(ID, sock, addr):
     global ID_list
 
     def bytes_to_int(xbytes: bytes) -> int:
@@ -100,6 +106,7 @@ def start(ID,sock,addr):
                 pass
 
     Client = client()
+
     def main():
         try:
             Client.Socket = sock
@@ -110,17 +117,20 @@ def start(ID,sock,addr):
             Client.Name = get_name()
             connect_to_all()
 
-            ID_list[ID] = Client
-            ID_list[ID].start()
+            ID_list[Client.Name] = Client
+            ID_list[Client.Name].start()
         except:
             print(f"{bcolors.FAIL}die Verbindung zu dem Client {Client.Name if len(Client.Name) > 0 else ID} wurde verloren{bcolors.END}")
             temp.pop(ID)
             sub_from_onlinelist(Client.Name)
 
     main()
+
+
 class client(threading.Thread):
     global ID_list
     global temp
+
     def __init__(self):
         threading.Thread.__init__(self)
 
@@ -131,7 +141,7 @@ class client(threading.Thread):
         self.running = False
         self.key = None
         self.pk = None
-        self.Kontakte = {} #[online] schreiben; [anstehent] anfrage annhemen
+
     def Read(self, crypt=True):
 
         recv = self.Socket.recv(4096)
@@ -165,7 +175,7 @@ class client(threading.Thread):
 
             self.running = False
             self.sub_from_onlinelist(self.Name)
-            ID_list.pop(self.ID)
+            ID_list.pop(self.Name)
             if temp[self.ID]:
                 temp.pop(self.ID)
 
@@ -182,7 +192,7 @@ class client(threading.Thread):
             self.sub_from_onlinelist(self.Name)
 
             print(f"Der Client {self.Name} wurde geschlossen")
-            ID_list.pop(self.ID)
+            ID_list.pop(self.Name)
             temp.pop(self.ID)
 
         elif parameter == "#O":
@@ -197,24 +207,18 @@ class client(threading.Thread):
             return
 
         msg = self.Read(False)
-        exist = False
 
         if len(msg) == 0:
+            print(f"{bcolors.WARNING}die Nachricht hat kein inhalt{bcolors.END}")
             return
 
-        for s in ID_list:
-            if ID_list[s].Name == Empfänger_Name:
-                Empfänger_ID = s
-                exist = True
-                break
-
-        if not exist:
-            print(f"{bcolors.WARNING}Der Client {Empfänger_Name} existiert nicht{bcolors.END}")
+        if Empfänger_Name not in ID_list.keys():
+            print(f"{bcolors.WARNING}Der Client {Empfänger_Name} existiert nicht{bcolors.END}");
             return
 
         print(f"{self.Name} --> {Empfänger_Name}")
         print("msg ->", msg)
-        ID_list[Empfänger_ID].Send_von(self.Name, msg)
+        ID_list[Empfänger_Name].Send_von(self.Name, msg)
 
     def add_to_onlinelist(self, name):
         global ID_list
@@ -251,7 +255,6 @@ class client(threading.Thread):
 
 temp = {}
 ID_list = {}
-#TODO name_list = {}
 
 if __name__ == '__main__':
     Nutzer_max = 10
