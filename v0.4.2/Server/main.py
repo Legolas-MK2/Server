@@ -8,6 +8,7 @@ from time import sleep
 
 import Login
 import Cipher
+import Socket
 
 
 class bcolors:
@@ -26,11 +27,12 @@ class client(threading.Thread):
     global client_list
     global temp
 
-    def __init__(self, ID, Socket):
+    def __init__(self, ID, socket_):
         threading.Thread.__init__(self)
 
         self.ID = ID
-        self.Socket = Socket
+        #self.Socket = Socket
+        self.sock = Socket.My_Socket(socket_)
         self.addr = None
         self.Name = ""
         self.running = False
@@ -61,81 +63,78 @@ class client(threading.Thread):
 
     def run(self):
         try:
-            self.addr = addr
             self.set_key()
-
             self.Name = self.get_name()
             client_list[self.Name] = client_list.pop(str(self.ID)+" ")
             self.connect_to_all()
 
             self.running = True
             while self.running:
-                recv = self.Read()
+                recv = self.sock.read()
                 self.data_Transfer(recv)
-        except:
-            print(f"{bcolors.FAIL}die Verbindung zu dem Client {self.Name if len(self.Name)> 0 else self.ID} wurde verloren{bcolors.END}")
+        except ConnectionResetError:
+            print(f"{bcolors.FAIL}Der Client mit {(f'dem Namen{self.Name}') if len(self.Name)> 0 else (f'{self.ID}')}{bcolors.END}")
 
             self.running = False
             self.sub_from_onlinelist(self.Name)
-            client_list.pop(self.Name)
+            client_list.pop(self.Name) #TODO if self.Name not found
 
         print(f"Der Thread vom Client {self.Name if len(self.Name)> 0 else self.ID} hat sich geschlossen")
 
     def set_key(self):
-        self.pk = self.Read(False)
-        self.key = Cipher.generate_key(20)
-        msg = Cipher.RSA_encrypt(self.pk, self.key)
-        self.Send(msg, False)
+        self.pk = self.sock.read(False)
+        self.sock.key = Cipher.generate_key(20)
+        msg = Cipher.RSA_encrypt(self.pk, self.sock.key)
+        self.sock.send(msg, False)
 
     def get_name(self):
         Name = ""
         while len(Name) < 1:
-            Name = self.Read()
+            Name = self.sock.read()
             print(f"Name = {Name}")
             if Name[:6] == "Server" or " " in Name or Name == "":
                 print("name error")
-                self.Send("e")
+                self.sock.send("e")
                 continue
             elif len(client_list) == 0:
-                self.Send(" ")
-                print(f"{bcolors.OKGREEN}Der Nutzer {self.Name} hat sich eingeloggt und hat die ID {self.ID} bekommen{bcolors.END}")
+                self.sock.send(" ")
+                print(f"{bcolors.OKGREEN}Der Nutzer {Name} hat sich eingeloggt und hat die ID {self.ID} bekommen{bcolors.END}")
                 return Name
             continue_ = False
             for s in client_list:
                 if client_list[s].Name == Name:
-                    self.Send("e")
+                    self.sock.send("e")
                     continue_ = True
             if continue_:
                 Name = ""
                 continue
-            self.Send(" ")
-            print(f"{bcolors.OKGREEN}Der Nutzer {self.Name} hat sich eingeloggt und hat die ID {self.ID} bekommen{bcolors.END}")
+            self.sock.send(" ")
+            print(f"{bcolors.OKGREEN}Der Nutzer {Name} hat sich eingeloggt und hat die ID {self.ID} bekommen{bcolors.END}")
             return Name
 
     def connect_to_all(self):
         for c in client_list:
-            if client_list[c].Name != self.Name \
-                    and c[-1] != " ":
+            if client_list[c].Name != self.Name and c[-1] != " ":
                 pk = self.bytes_to_int(client_list[c].pk)
                 pk = str(pk)
 
-                self.Send(client_list[c].Name + " " + pk)
-                recv = self.Read().split(" ")
+                self.sock.send(client_list[c].Name + " " + pk)
+                recv = self.sock.read().split(" ")
                 if client_list[c].Name == recv[0]:
-                    client_list[c].Send("Server")
-                    client_list[c].Send("#O + " + self.Name + " " + recv[1])
+                    client_list[c].sock.send("Server")
+                    client_list[c].sock.send("#O + " + self.Name + " " + recv[1])
                 else:
                     print(f"{bcolors.WARNING}Warning: in connect_to_all")
                     print(f"client_list[c].Name ='{client_list[c].Name}'")
                     print(f"recv[0] ='{recv[0]}'{bcolors.END}")
-        self.Send("e")
+        self.sock.send("e")
 
     def ask_Server(self, parameter):
         if parameter == '#C':
             print(f"Der Client {self.Name} wird geschlossen")
 
-            self.Send("Server")
-            self.Send("#C")
+            self.sock.send("Server")
+            self.sock.send("#C")
 
             self.running = False
             self.sub_from_onlinelist(self.Name)
@@ -150,11 +149,11 @@ class client(threading.Thread):
 
     def data_Transfer(self, Empfänger_Name):
         if Empfänger_Name == "Server":
-            msg = self.Read()
+            msg = self.sock.read()
             self.ask_Server(msg)
             return
 
-        msg = self.Read(False)
+        msg = self.sock.read(False)
 
         if len(msg) == 0:
             print(f"{bcolors.WARNING}die Nachricht hat kein inhalt{bcolors.END}")
@@ -166,7 +165,7 @@ class client(threading.Thread):
 
         print(f"{self.Name} --> {Empfänger_Name}")
         print("msg ->", msg)
-        client_list[Empfänger_Name].Send_von(self.Name, msg)
+        client_list[Empfänger_Name].sock.send_c2c(self.Name, msg)
 
     def add_to_onlinelist(self, name):
         global client_list
@@ -179,8 +178,8 @@ class client(threading.Thread):
                 continue
             try:
                 key = str(self.bytes_to_int(self.pk))
-                client_list[s].Send("Server")
-                client_list[s].Send("#O + " + name + " " + key)
+                client_list[s].sock.send("Server")
+                client_list[s].sock.send("#O + " + name + " " + key)
             except:
                 pass
 
@@ -194,8 +193,8 @@ class client(threading.Thread):
             if not client_list[s].running:
                 continue
             try:
-                client_list[s].Send("Server")
-                client_list[s].Send("#O - " + name)
+                client_list[s].sock.send("Server")
+                client_list[s].sock.send("#O - " + name)
             except:
                 pass
 
@@ -217,8 +216,8 @@ if __name__ == '__main__':
     for i in range(0, Nutzer_max):
         try:
             print("Warte auf neue Verbindung...")
-            (sock, addr) = server_socket.accept()
-            client_list[str(i)+" "] = client(i, sock)
+            (socket_, addr) = server_socket.accept()
+            client_list[str(i)+" "] = client(i, socket_)
             client_list[str(i)+" "].start()
             print(bcolors.OKGREEN + "Ein neuer Client hat sich verbunden" + bcolors.END)
         except:
