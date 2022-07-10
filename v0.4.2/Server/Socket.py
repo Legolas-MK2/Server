@@ -15,13 +15,6 @@ class My_Socket:
         self.socket = sock
         self.key = None
 
-    def try_connect(self, ip, port):
-        try:
-            self.socket.connect((ip, port))
-            return self.socket  # Server found
-        except ConnectionRefusedError:
-            return None         # no Server found
-
     def read(self, crypt=True):
         recv = self.socket.recv(buffer_recv)
         if crypt:

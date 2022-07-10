@@ -1,5 +1,7 @@
+add friend system
 json format
 frontend
-add friend system
 logs
+better console output
+send file
 debug client

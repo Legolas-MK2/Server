@@ -1,3 +1,6 @@
+import Cipher
+import Socket
+
 
 class bcolors:
     HEADER = '\033[95m'
@@ -11,55 +14,65 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-def set_key(self):
-    self.pk = self.Read(False)
-    self.key = Cipher.generate_key(20)
-    msg = Cipher.RSA_encrypt(self.pk, self.key)
-    self.Send(msg, False)
+def bytes_to_int(xbytes: bytes) -> int:
+    return int.from_bytes(xbytes, "little")
 
 
-def get_name(self):
+def int_to_bytes(x: int) -> bytes:
+    return x.to_bytes((x.bit_length() + 7) // 8, "little")
+
+
+def get_key(sock: Socket.My_Socket) -> bytes:
+    pk = sock.read(False)
+    key = Cipher.generate_key(20)
+    msg = Cipher.RSA_encrypt(pk, key)
+    sock.send(msg, False)
+    return key
+
+
+def get_name(sock: Socket.My_Socket, client_list) -> str:
     Name = ""
     while len(Name) < 1:
-        Name = self.Read()
-        print(f"Name = {Name}")
+        print("\/key\/")
+        print(sock.key)
+        Name = sock.read()
+
         if Name[:6] == "Server" or " " in Name or Name == "":
             print("name error")
-            self.Send("e")
+            sock.send("e")
             continue
         elif len(client_list) == 0:
-            self.Send(" ")
-            print(
-                f"{bcolors.OKGREEN}Der Nutzer {self.Name} hat sich eingeloggt und hat die ID {self.ID} bekommen{bcolors.END}")
-            return Name
+            sock.send(" ")
+            break
+
         continue_ = False
         for s in client_list:
             if client_list[s].Name == Name:
-                self.Send("e")
+                sock.send("e")
                 continue_ = True
+
         if continue_:
             Name = ""
             continue
-        self.Send(" ")
-        print(
-            f"{bcolors.OKGREEN}Der Nutzer {self.Name} hat sich eingeloggt und hat die ID {self.ID} bekommen{bcolors.END}")
-        return Name
+
+        sock.send(" ")
+        break
+    return Name
 
 
-def connect_to_all(self):
+def connect_to_all(sock: Socket.My_Socket, client_list, Name):
     for c in client_list:
-        if client_list[c].Name != self.Name \
-                and c[-1] != " ":
-            pk = self.bytes_to_int(client_list[c].pk)
+        if client_list[c].Name != Name and c[-1] != " ":
+            pk = bytes_to_int(client_list[c].pk)
             pk = str(pk)
 
-            self.Send(client_list[c].Name + " " + pk)
-            recv = self.Read().split(" ")
+            sock.send(client_list[c].Name + " " + pk)
+            recv = sock.read().split(" ")
             if client_list[c].Name == recv[0]:
-                client_list[c].Send("Server")
-                client_list[c].Send("#O + " + self.Name + " " + recv[1])
+                client_list[c].sock.send("Server")
+                client_list[c].sock.send("#O + " + Name + " " + recv[1])
             else:
                 print(f"{bcolors.WARNING}Warning: in connect_to_all")
                 print(f"client_list[c].Name ='{client_list[c].Name}'")
                 print(f"recv[0] ='{recv[0]}'{bcolors.END}")
-    self.Send("e")
+    sock.send("e")
