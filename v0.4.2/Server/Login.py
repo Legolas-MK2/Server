@@ -22,22 +22,20 @@ def int_to_bytes(x: int) -> bytes:
     return x.to_bytes((x.bit_length() + 7) // 8, "little")
 
 
-def get_key(sock: Socket.My_Socket) -> bytes:
+def get_key(sock: Socket.My_Socket) -> (bytes, bytes):
     pk = sock.read(False)
     key = Cipher.generate_key(20)
     msg = Cipher.RSA_encrypt(pk, key)
     sock.send(msg, False)
-    return key
+    return pk, key
 
 
 def get_name(sock: Socket.My_Socket, client_list) -> str:
-    Name = ""
-    while len(Name) < 1:
-        print("\/key\/")
-        print(sock.key)
-        Name = sock.read()
+    name = ""
+    while len(name) < 1:
+        name = sock.read()
 
-        if Name[:6] == "Server" or " " in Name or Name == "":
+        if name[:6] == "Server" or " " in name or name == "":
             print("name error")
             sock.send("e")
             continue
@@ -47,22 +45,23 @@ def get_name(sock: Socket.My_Socket, client_list) -> str:
 
         continue_ = False
         for s in client_list:
-            if client_list[s].Name == Name:
+            if client_list[s].Name == name:
                 sock.send("e")
                 continue_ = True
 
         if continue_:
-            Name = ""
+            name = ""
             continue
 
         sock.send(" ")
         break
-    return Name
+    return name
 
 
-def connect_to_all(sock: Socket.My_Socket, client_list, Name):
+def connect_to_all(sock: Socket.My_Socket, client_list, name):
     for c in client_list:
-        if client_list[c].Name != Name and c[-1] != " ":
+        if client_list[c].Name != name and c[-1] != " ":
+            print(f"pk --> {client_list[c].pk}")
             pk = bytes_to_int(client_list[c].pk)
             pk = str(pk)
 
@@ -70,7 +69,7 @@ def connect_to_all(sock: Socket.My_Socket, client_list, Name):
             recv = sock.read().split(" ")
             if client_list[c].Name == recv[0]:
                 client_list[c].sock.send("Server")
-                client_list[c].sock.send("#O + " + Name + " " + recv[1])
+                client_list[c].sock.send("#O + " + name + " " + recv[1])
             else:
                 print(f"{bcolors.WARNING}Warning: in connect_to_all")
                 print(f"client_list[c].Name ='{client_list[c].Name}'")
