@@ -5,3 +5,4 @@ logs
 better console output
 send file
 debug client
+Singel Client class
