@@ -83,9 +83,9 @@ chunks = 32 * 1024
 if __name__ == "__main__":
     #AES
     key = generate_key(20)
-    crypt_text = AES_encrypt_text(data=b"das ist eine nachicht", key=key)
-    print(crypt_text)
-    print(AES_decrypt_text(crypt_text, key=key))
+    #crypt_text = AES_encrypt_text(data=b'\\xc8\\xb3.h\\x14\\xd3\\xa6\\x8e\\x8fi\\xb4U\\xdc\\x05\\xab\\xc2\\xc5\\xdafw\\xc9q\\xa3Q|\\xc5\\xf9\\x85\\xd3\\x18\\xc4#', key=b'\\xc5\\x99\\xfb\\xa5G\\xc2@Z+J\\xc2\\xd2\\xb5[\\xf3\\x17')
+    #print(crypt_text)
+    print(AES_decrypt_text(data=b'\\xc8\\xb3.h\\x14\\xd3\\xa6\\x8e\\x8fi\\xb4U\\xdc\\x05\\xab\\xc2\\xc5\\xdafw\\xc9q\\xa3Q|\\xc5\\xf9\\x85\\xd3\\x18\\xc4#', key=b'\\xc5\\x99\\xfb\\xa5G\\xc2@Z+J\\xc2\\xd2\\xb5[\\xf3\\x17'))
 
     #RSA
     pk, sk = RSA_generate_pk_sk()

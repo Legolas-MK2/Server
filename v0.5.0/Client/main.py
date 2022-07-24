@@ -1,3 +1,4 @@
+import json
 import time
 from time import sleep
 import threading
@@ -50,36 +51,34 @@ class Read_Thread(threading.Thread):
         start = True
         while running:
             #try:
-            Sender = sock.read()
-            if len(Sender) == 0:
-                continue
+                recv = sock.read()
 
-            if Sender == "Server":
-                recv = sock.read().split(" ")
-                self.Server(recv)
-                continue
-
-            for user in users.items():
-                if Sender in user[0]:
-                    recv = sock.read(False)
-                    msg = Cipher.AES_decrypt_text(recv, users[Sender])
-                    msg = str(msg, "utf-8")
-                    nachrichten.append(f"von {Sender}: " + msg)
-                    logs.append(f"von {Sender}: " + msg)
-
-            """except Exception as e:
-                running = False
-                print(bcolors.FAIL + "\n\nThread wurde Abgebrochen\nexcept: " + str(e) + bcolors.END)"""
+                if recv["author"] == "Server":
+                    self.Server(recv["message"])
+                    continue
+                for user in users.items():
+                    if recv["author"] in user[0]:
+                        msg = int(recv["message"])
+                        msg = self.int_to_bytes(msg)
+                        msg = Cipher.AES_decrypt_text(msg, users[recv['author']])
+                        msg = str(msg, "utf-8")
+                        nachrichten.append(f"von {recv['author']}: " + msg)
+                        logs.append(f"von {recv['author']}: " + msg)
+            #except Exception as e:
+            #    if running:
+            #        running = False
+            #        print(bcolors.FAIL + "\n\nThread wurde Abgebrochen\nexcept: " + str(e) + bcolors.END)
 
     def set_keys(self):
         users[username] = Cipher.generate_key(20)
         while True:
             recv = sock.read()
-            if recv == "e":
-                return
-            recv = recv.split(" ")
-            name = recv[0]
-            pk = recv[1]
+            recv = recv["message"]
+
+            if recv == "OK": return
+
+            name = recv["name"]
+            pk = recv["key"]
 
             pk = self.int_to_bytes(int(pk))
             bkey = Cipher.generate_key(20)
@@ -87,18 +86,23 @@ class Read_Thread(threading.Thread):
             key = str(self.bytes_to_int(key))
             users[name] = bkey
 
-            sock.send(f"{name} {key}", key_server)
+            sock.send({"author": "Server",
+                       "receiver": name,
+                       "message":{
+                           "name": name,
+                           "key": key
+                       }}, key_server)
 
-    def Server(self, command):
+    def Server(self, msg):
         global running
-        if command[0] == "#C" and not running:
+        if msg["command"] == "#C" and not running:
             sock.close()
             print("Die Verbindung wurde geschlossen")
             sys.exit()
-        elif command[0] == "#O":
+        elif msg["command"] == "#O":
             global sk
-            mode = command[1]
-            user_name = command[2]
+            mode = msg["mode"]
+            user_name = msg["name"]
 
             if mode == "-":
                 for user in users.items():
@@ -107,17 +111,19 @@ class Read_Thread(threading.Thread):
                         return
 
             elif mode == "+":
-                key = command[3]
+                key = msg["key"]
                 key = self.int_to_bytes(int(key))
                 key = Cipher.RSA_decrypt(sk, key)
                 users[user_name] = key
             else:
-                print(bcolors.WARNING + command + " Wurde vom Server gesendet ohne es zu verarbeiten" + bcolors.END)
+                print(bcolors.WARNING + msg + " Wurde vom Server gesendet ohne es zu verarbeiten" + bcolors.END)
 
-    def bytes_to_int(self, xbytes: bytes) -> int:
+    @staticmethod
+    def bytes_to_int(xbytes: bytes) -> int:
         return int.from_bytes(xbytes, "little")
 
-    def int_to_bytes(self, x: int) -> bytes:
+    @staticmethod
+    def int_to_bytes(x: int) -> bytes:
         return x.to_bytes((x.bit_length() + 7) // 8, "little")
 
 
@@ -149,9 +155,11 @@ def Send_to_client(Empfänger, msg):
 
             msg = bytes(msg, "utf-8")
             msg = Cipher.AES_encrypt_text(msg, users[Empfänger])
+            msg = Read_Thread.bytes_to_int(msg)
 
-            sock.send(Empfänger)
-            sock.send(msg, False)
+            sock.send({"author": username,
+                       "receiver": Empfänger,
+                       "message": msg})
 
             print("Nachricht wurde gesendet")
             return
@@ -161,12 +169,11 @@ def Send_to_client(Empfänger, msg):
 
 def close():
     global running
-
+    sock.send({"author": username,
+               "receiver": "Server",
+               "message": "#C"})
     print("Verbindung wird geschlossen")
     running = False
-    sock.send("Server")
-    sock.send("#C")
-    sys.exit()
 
 
 def online():
@@ -226,6 +233,8 @@ def switch(Befehl, parameter1="", parameter2=""):
         log()
     elif Befehl in Befehl_help:
         help()
+    elif Befehl == "":
+        return
     else:
         print(f"{bcolors.WARNING}Der Befehl {Befehl} ist entweder falsch geschrieben oder konnte nicht gefunden werden.{bcolors.END}")
 
@@ -236,6 +245,8 @@ def main():
             msg = input(">>> ")
         except KeyboardInterrupt:
             pass
+        except EOFError:
+            continue
 
         if " " not in msg:
             switch(Befehl=msg.lower().strip())

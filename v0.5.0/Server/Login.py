@@ -33,27 +33,36 @@ def get_key(sock: Socket.My_Socket) -> (bytes, bytes):
 def get_name(sock: Socket.My_Socket, client_list) -> str:
     name = ""
     while len(name) < 1:
-        name = sock.read()
+        recv = sock.read()
+        name = recv["message"]
 
         if name[:6] == "Server" or " " in name or name == "":
             print("name error")
-            sock.send("e")
+            sock.send({"author": "Server",
+                       "receiver": name,
+                       "message": "Check the name-rules"})
             continue
         elif len(client_list) == 0:
-            sock.send(" ")
+            sock.send({"author": "Server",
+                       "receiver": name,
+                       "message": "OK"})
             break
 
         continue_ = False
         for s in client_list:
             if client_list[s].Name == name:
-                sock.send("e")
+                sock.send({"author": "Server",
+                           "receiver": name,
+                           "message": "This name already exists"})
                 continue_ = True
 
         if continue_:
             name = ""
             continue
 
-        sock.send(" ")
+        sock.send({"author": "Server",
+                   "receiver": name,
+                   "message": "OK"})
         break
     return name
 
@@ -62,15 +71,25 @@ def connect_to_all(sock: Socket.My_Socket, client_list, name):
     for c in client_list:
         if client_list[c].Name != name and c[-1] != " ":
             pk = bytes_to_int(client_list[c].pk)
-            pk = str(pk)
 
-            sock.send(client_list[c].Name + " " + pk)
-            recv = sock.read().split(" ")
-            if client_list[c].Name == recv[0]:
-                client_list[c].sock.send("Server")
-                client_list[c].sock.send("#O + " + name + " " + recv[1])
+            sock.send({"author": "Server",
+                       "receiver": name,
+                       "message": {
+                           "name": client_list[c].Name,
+                           "key": str(pk)
+                       }})
+            recv = sock.read()["message"]
+            if client_list[c].Name == recv["name"]:
+                client_list[c].sock.send({"author": "Server",
+                                          "receiver": client_list[c].Name,
+                                          "message": {"command": "#O",
+                                                      "mode": "+",
+                                                      "name": name,
+                                                      "key": recv["key"]}})
             else:
                 print(f"{bcolors.WARNING}Warning: in connect_to_all")
                 print(f"client_list[c].Name ='{client_list[c].Name}'")
                 print(f"recv[0] ='{recv[0]}'{bcolors.END}")
-    sock.send("e")
+    sock.send({"author": "Server",
+               "receiver": name,
+               "message": "OK"})

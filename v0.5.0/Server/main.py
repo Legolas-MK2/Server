@@ -17,7 +17,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-class client_händler(threading.Thread):
+class client_handle(threading.Thread):
     global client_list
 
     def __init__(self, id_, sock):
@@ -47,16 +47,14 @@ class client_händler(threading.Thread):
             #   client-main-loop
             self.running = True
             while self.running:
-                author = self.sock.read()
-
+                recv = self.sock.read()
                 #   if the message is addressed to the server
-                if author == "Server":
-                    msg = self.sock.read()
-                    self.client2server(msg)
+                if recv["receiver"] == "Server":
+                    self.client2server(recv["message"])
                     continue
 
                 #   Message forwarding
-                self.forwarding(author)
+                self.forwarding(recv)
 
         except ConnectionResetError:
             self.running = False
@@ -75,12 +73,12 @@ class client_händler(threading.Thread):
         if parameter == '#C':
             print(f"Der Client {self.Name} wird geschlossen")
 
-            self.sock.send("Server")
-            self.sock.send("#C")
-
             self.running = False
             self.sub_from_onlinelist(self.Name)
-
+            self.sock.send({"author": "Server",
+                            "message": {
+                                "command": "#C"
+                            }})
             print(f"Der Client {self.Name} wurde geschlossen")
             client_list.pop(self.Name)
 
@@ -90,34 +88,18 @@ class client_händler(threading.Thread):
             print(f"{bcolors.WARNING}Der Client {self.Name} hat versucht an den Server "
                   f"die Nachricht '{parameter}' zusenden ohne das der Server eine Antwort hat{bcolors.END}")
 
-    def forwarding(self, name_receiver):
-        msg = self.sock.read(False)
-
-        if len(msg) == 0:
-            print(f"{bcolors.WARNING}die Nachricht hat kein inhalt{bcolors.END}")
-            return
-
+    def forwarding(self, msg):
+        name_receiver = msg["receiver"]
         receiver = client_list.get(name_receiver)
         if not receiver:
             print(f"{bcolors.WARNING}Der Client {name_receiver} wurde nicht gefunden{bcolors.END}")
             return
 
         print(f"{self.Name} --> {name_receiver}")
-        print("msg ->", msg)
-        receiver.sock.send_c2c(self.Name, msg)
-
-    def add_to_onlinelist(self, name):
-        global client_list
-
-        if len(name) < 1:
-            return
-
-        for s in client_list:
-            if not client_list[s].running:
-                continue
-            key = str(self.bytes_to_int(self.pk))
-            client_list[s].sock.send("Server")
-            client_list[s].sock.send("#O + " + name + " " + key)
+        print("msg ->", msg["message"])
+        receiver.sock.send({"author": self.Name,
+                            "message": msg["message"]
+                            })
 
     @staticmethod
     def sub_from_onlinelist(name):
@@ -129,8 +111,12 @@ class client_händler(threading.Thread):
         for s in client_list:
             if not client_list[s].running:
                 continue
-            client_list[s].sock.send("Server")
-            client_list[s].sock.send("#O - " + name)
+            j = {"author": "Server",
+                 "receiver": client_list[s].Name,
+                 "message": {"command": "#O",
+                             "mode": "-",
+                             "name": name}}
+            client_list[s].sock.send(j)
 
     @staticmethod
     def bytes_to_int(xbytes: bytes) -> int:
@@ -153,7 +139,7 @@ def main():
     for id in range(max_user):
         print("Warte auf neue Verbindung...")
         (socket_, addr) = server_socket.accept()
-        client_list[str(id) + " "] = client_händler(id, socket_)
+        client_list[str(id) + " "] = client_handle(id, socket_)
         client_list[str(id) + " "].start()
         print(bcolors.OKGREEN + "Ein neuer Client hat sich verbunden" + bcolors.END)
 

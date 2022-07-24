@@ -1,8 +1,11 @@
-add friend system
-json format
-frontend
+json format (base64 entcode)
+    json Unterverzeichniss base64 codieren
+send file
 logs
 better console output
-send file
 debug client
+    name
+
 Singel Client class
+add friend system
+frontend

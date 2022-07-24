@@ -26,13 +26,16 @@ def get_key_server(sock):
 
 
 def get_name(sock):
-    recv = ""
-    while recv != " ":
-        name = input("Name: ")
-        if name[:6] == "Server" or " " in name or name == "":
-            continue
+    while True:
+        try:
+            name = input("Name: ")
+            if name[:6] == "Server" or " " in name or name == "":
+                continue
 
-        sock.send(name)
-        recv = sock.read()
+            sock.send({"receiver": "Server",
+                       "message": name})
+            recv = sock.read()["message"]
 
-    return name
+            if recv == "OK": return name
+        except KeyboardInterrupt:
+            pass
