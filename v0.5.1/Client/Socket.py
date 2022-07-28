@@ -1,6 +1,8 @@
 # public module
+import os
 import socket
 import json
+import sys
 from time import sleep
 from base64 import b64encode, b64decode
 # own module
@@ -33,6 +35,20 @@ class My_Socket:
         sleep(0.1)
         return recv
 
+    def read_file(self, filename):
+        if not os.path.exists(r"temp"):
+            os.mkdir("temp")
+
+        with open(rf"temp\{filename}", "wb") as file:
+            bytes_recv = self.socket.recv(buffer_recv)
+            while bytes_recv:
+                print(sys.getsizeof(bytes_recv))
+                file.write(bytes_recv)
+                if sys.getsizeof(bytes_recv) != buffer_recv:
+                    break
+                else:
+                    bytes_recv = self.socket.recv(buffer_recv)
+
     def send(self, msg: dict, crypt=True):
         if crypt:
             msg = json2bytes(msg)
@@ -40,6 +56,15 @@ class My_Socket:
 
         sleep(0.1)
         self.socket.send(msg)
+
+    def send_file(self, path):
+        with open(path, "rb") as file:
+            while True:
+                file_bytes = file.read(buffer_recv)
+                if not file_bytes:
+                    break
+
+                self.socket.sendall(file_bytes)
 
     def close(self):
         try:

@@ -24,7 +24,6 @@ class My_Socket:
             recv = recv.decode("utf-8")
             recv = bytes2json(recv)
 
-
         sleep(0.1)
         return recv
 
@@ -36,8 +35,14 @@ class My_Socket:
         sleep(0.1)
         self.socket.send(msg)
 
+    def file_stream(self, sock_author):
+        recv = sock_author.socket.recv(buffer_recv)
+        while recv:
+            self.socket.sendall(recv)
+            recv = sock_author.socket.recv(buffer_recv)
 
-def json2bytes(json_,recursive=False):
+
+def json2bytes(json_, recursive=False):
     for key in json_:
         if type(json_[key]) == dict:
             json_[key] = json2bytes(json_[key], True)

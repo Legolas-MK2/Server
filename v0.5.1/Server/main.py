@@ -83,6 +83,20 @@ class client_handle(threading.Thread):
                             }})
             print(f"Der Client {self.Name} wurde geschlossen")
             client_list.pop(self.Name)
+        elif parameter["command"] == "#F":
+            receiver = parameter["receiver"]
+            if receiver not in client_list:
+                return
+            print(f"{self.Name} --> {receiver}")
+            print("msg = file")
+            print(f"filename = {parameter['filename']}")
+            client_list[receiver].sock.send({
+                "author": "Server",
+                "message":{
+                    "command": "#F"
+                }
+            })
+            client_list[receiver].sock.file_stream(self.sock)
 
         elif parameter == "#O":
             pass

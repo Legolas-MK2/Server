@@ -56,6 +56,7 @@ class Read_Thread(threading.Thread):
                 if recv["author"] == "Server":
                     self.Server(recv["message"])
                     continue
+                print(recv)
                 for user in users.items():
                     if recv["author"] in user[0]:
                         msg = int(recv["message"])
@@ -99,6 +100,9 @@ class Read_Thread(threading.Thread):
             sock.close()
             print("Die Verbindung wurde geschlossen")
             sys.exit()
+        elif msg["command"] == "#F":
+            print("elkjdesnbkfjsghbfkjshf")
+            sock.read_file("file")
         elif msg["command"] == "#O":
             global sk
             mode = msg["mode"]
@@ -203,6 +207,7 @@ def send_file(reciver, file_path):
     if not os.path.exists(file_path) or not os.path.isfile(file_path):
         print("problem mit der file")
         return
+
     sock.send({"author": username,
                "receiver": "Server",
                "message": {
@@ -211,9 +216,8 @@ def send_file(reciver, file_path):
                    "filename": os.path.basename(file_path)
                }})
 
-    with open(file_path, "rb") as file:
-        pass
-
+    #Cipher.AES_encrypt_file(file_path, users[reciver])
+    sock.send_file(file_path)
 
 
 def help():
@@ -297,10 +301,10 @@ sk = b""
 max_user_parameter = 2
 username = ""
 start = False
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock = My_Socket(sock_)
 
 if __name__ == "__main__":
-    sock = My_Socket(sock)
     Login.connect(sock)
     pk, sk, key_server = Login.get_key_server(sock)
     sock.key = key_server

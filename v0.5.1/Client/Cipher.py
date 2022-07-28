@@ -1,6 +1,5 @@
 import os
 import sys
-
 from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA512
@@ -64,21 +63,6 @@ def AES_decrypt_file(filename, key):
                 f_output.truncate(filesize)
 
 
-def AES_encrypt_bytes(input, key):
-    global chunks
-    IV = Random.new().read(16)
-    entcryptor = AES.new(key, AES.MODE_CFB, IV)
-    return entcryptor.encrypt(IV + input)
-
-
-def AES_decrypt_bytes(input, key):
-    global chunks
-    IV = input[:16]
-    input = input[16:]
-    decryptor = AES.new(key, AES.MODE_CFB, IV)
-    return decryptor.decrypt(input)
-
-
 def AES_encrypt_text(data, key):
     vector = Random.get_random_bytes(AES.block_size)
     encryption_cipher = AES.new(key, AES.MODE_CBC, vector)
@@ -104,12 +88,8 @@ chunks = 32 * 1024
 if __name__ == "__main__":
     #AES
     key = b'r\xce\xdbP\xd4\xb7G\xfc\x04H82\x96\xd24\x17'
-    print(sys.getsizeof())
-    e = AES_encrypt_bytes(input, key)
-    print(e)
-    print(d)
-    if d == input:
-        print("jheasgdwiajkfdgUIKdgsauoidfgguiosedfiuswaeuhzijgu")
+    print(sys.getsizeof(Random.new().read(16)))
+    exit(0)
     """
     #RSA
     pk, sk = RSA_generate_pk_sk()
