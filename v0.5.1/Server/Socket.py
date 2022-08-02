@@ -1,6 +1,7 @@
 # public module
 import json
 import socket
+import sys
 from time import sleep
 from base64 import b64encode, b64decode
 
@@ -9,7 +10,7 @@ import Cipher
 
 
 encoding = "utf-8"
-buffer_recv = 4096
+buffer_recv = 1024
 
 
 class My_Socket:
@@ -38,8 +39,16 @@ class My_Socket:
     def file_stream(self, sock_author):
         recv = sock_author.socket.recv(buffer_recv)
         while recv:
-            self.socket.sendall(recv)
+            sleep(0.1)
+            self.socket.send(recv)
+            print("warte auf neues")
+            sleep(0.1)
             recv = sock_author.socket.recv(buffer_recv)
+            print("-----------------------------------------")
+            print(recv)
+            print("-----------------------------------------")
+        self.socket.send(b"")
+        print("stream ende")
 
 
 def json2bytes(json_, recursive=False):

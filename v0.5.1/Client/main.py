@@ -101,7 +101,6 @@ class Read_Thread(threading.Thread):
             print("Die Verbindung wurde geschlossen")
             sys.exit()
         elif msg["command"] == "#F":
-            print("elkjdesnbkfjsghbfkjshf")
             sock.read_file("file")
         elif msg["command"] == "#O":
             global sk
@@ -287,7 +286,6 @@ def main():
         #except:
         #    if running == True:
         #        print(bcolors.WARNING + "Es gab ein Fehler bei dem Input" + bcolors.END)
-
 
 
 # Global Variable

@@ -92,8 +92,10 @@ class client_handle(threading.Thread):
             print(f"filename = {parameter['filename']}")
             client_list[receiver].sock.send({
                 "author": "Server",
-                "message":{
-                    "command": "#F"
+                "message": {
+                    "command": "#F",
+                    "filename": parameter["filename"]
+
                 }
             })
             client_list[receiver].sock.file_stream(self.sock)
@@ -145,7 +147,7 @@ class client_handle(threading.Thread):
 
 def main():
     max_user = 10
-    ip = "127.0.0.1"
+    ip = "192.168.178.75"
     port = 5000
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -5,7 +5,7 @@ import Cipher
 import Socket
 
 
-ip = "127.0.0.1"
+ip = "192.168.178.75"
 port = 5000
 
 
