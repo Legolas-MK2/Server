@@ -8,7 +8,7 @@ import os
 import sys
 
 import Login
-from Socket import My_Socket
+from Socket import My_Socket, buffer_recv
 
 
 class bcolors:
@@ -56,19 +56,32 @@ class Read_Thread(threading.Thread):
                 if recv["author"] == "Server":
                     self.Server(recv["message"])
                     continue
-                print(recv)
+
                 for user in users.items():
                     if recv["author"] in user[0]:
-                        msg = int(recv["message"])
-                        msg = self.int_to_bytes(msg)
-                        msg = Cipher.AES_decrypt_text(msg, users[recv['author']])
-                        msg = str(msg, "utf-8")
-                        nachrichten.append(f"von {recv['author']}: " + msg)
-                        logs.append(f"von {recv['author']}: " + msg)
+                        if recv.get("type") == "text":
+                            print("get text")
+                            self.text_msg(recv)
+                        elif recv.get("type") == "file":
+                            self.file_msg(recv)
             #except Exception as e:
             #    if running:
             #        running = False
             #        print(bcolors.FAIL + "\n\nThread wurde Abgebrochen\nexcept: " + str(e) + bcolors.END)
+
+    def text_msg(self, recv):
+        msg = int(recv["message"])
+        msg = self.int_to_bytes(msg)
+        msg = Cipher.AES_decrypt_text(msg, users[recv['author']])
+        msg = str(msg, "utf-8")
+        nachrichten.append(f"von {recv['author']}: " + msg)
+        logs.append(f"von {recv['author']}: " + msg)
+
+    def file_msg(self, recv):
+        msg = recv["message"]
+
+        sock.read_file(msg["file_name"], int(msg["packet_count"]))
+        Cipher.AES_decrypt_file("temp/crypted-" + msg["file_name"], users[recv['author']])
 
     def set_keys(self):
         users[username] = Cipher.generate_key(20)
@@ -89,7 +102,7 @@ class Read_Thread(threading.Thread):
 
             sock.send({"author": "Server",
                        "receiver": name,
-                       "message":{
+                       "message": {
                            "name": name,
                            "key": key
                        }}, key_server)
@@ -100,8 +113,6 @@ class Read_Thread(threading.Thread):
             sock.close()
             print("Die Verbindung wurde geschlossen")
             sys.exit()
-        elif msg["command"] == "#F":
-            sock.read_file("file")
         elif msg["command"] == "#O":
             global sk
             mode = msg["mode"]
@@ -144,7 +155,7 @@ def Update():
     nachrichten = []
 
 
-def Send_to_client(Empfänger, msg):
+def Send_to_client(receiver, msg):
     global key_server
     global logs
     msg = msg.strip()
@@ -153,15 +164,16 @@ def Send_to_client(Empfänger, msg):
         return
 
     for a, b in users.items():
-        if a == Empfänger:
-            logs.append(f"an {Empfänger}: {msg}")
+        if a == receiver:
+            logs.append(f"an {receiver}: {msg}")
 
             msg = bytes(msg, "utf-8")
-            msg = Cipher.AES_encrypt_text(msg, users[Empfänger])
+            msg = Cipher.AES_encrypt_text(msg, users[receiver])
             msg = Read_Thread.bytes_to_int(msg)
 
             sock.send({"author": username,
-                       "receiver": Empfänger,
+                       "receiver": receiver,
+                       "type": "text",
                        "message": msg})
 
             print("Nachricht wurde gesendet")
@@ -202,26 +214,37 @@ def log():
         print(msg)
 
 
-def send_file(reciver, file_path):
+def send_file(receiver, file_path):
     if not os.path.exists(file_path) or not os.path.isfile(file_path):
         print("problem mit der file")
         return
 
+    basename = os.path.basename(file_path)
+    Cipher.AES_encrypt_file(file_path, users[receiver])
+    file_path = "temp/crypted-" + basename
+
+    packet_count = round((os.path.getsize(file_path) / buffer_recv) + .5)
+    send_packet_count = packet_count
+
+    if float(packet_count) == float(os.path.getsize(file_path) / buffer_recv) + 1:
+        send_packet_count -= 1
+
     sock.send({"author": username,
-               "receiver": "Server",
+               "receiver": receiver,
+               "type": "file",
                "message": {
-                   "command": "#F",
-                   "receiver": reciver,
-                   "filename": os.path.basename(file_path)
+                   "receiver": receiver,
+                   "file_name": basename,
+                   "packet_count": send_packet_count
                }})
 
-    #Cipher.AES_encrypt_file(file_path, users[reciver])
-    sock.send_file(file_path)
+    sock.send_file(file_path, packet_count)
+    os.remove(file_path)
 
 
 def help():
     print("""Vielen Dank dass sie sich für den Hilfecommand Entschieden haben. Wir wünschen ihnen einen schönen Tag noch mit den folgenden Commands :)
-        Nachrichten senden           --> send [Empfänger] Nachricht
+        Nachrichten senden           --> send [Empfänger] [Nachricht]
         Nachrichten anschauen        --> update, msg
         Löschende Nachrichten an/aus --> log
         Erreichbare Clients sehen    --> online

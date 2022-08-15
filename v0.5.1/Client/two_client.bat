@@ -1,4 +1,3 @@
-rm -r -f "Client 2"
 mkdir "Client 2"
 copy Cipher.py "Client 2"
 copy Login.py "Client 2"

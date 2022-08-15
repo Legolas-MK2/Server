@@ -11,7 +11,8 @@ import Cipher
 
 
 encoding = "utf-8"
-buffer_recv = 1024
+buffer_recv = 4096
+balken_size = 10
 
 
 class My_Socket:
@@ -28,7 +29,6 @@ class My_Socket:
 
     def read(self, crypt=True) -> dict:
         recv = self.socket.recv(buffer_recv)
-        print(sys.getsizeof(recv))
         if crypt:
             recv = Cipher.AES_decrypt_text(recv, self.key)
             recv = recv.decode("utf-8")
@@ -37,17 +37,15 @@ class My_Socket:
         sleep(0.1)
         return recv
 
-    def read_file(self, filename):
+    def read_file(self, filename, packet_count):
         print("bekomme eine file")
         if not os.path.exists(r"temp"):
             os.mkdir("temp")
 
-        with open(rf"temp\{filename}", "wb") as file:
-            bytes_recv = self.socket.recv(buffer_recv)
-            while bytes_recv:
-                file.write(bytes_recv)
-                print(bytes_recv)
+        with open(rf"temp\crypted-{filename}", "wb") as file:
+            for _ in range(packet_count):
                 bytes_recv = self.socket.recv(buffer_recv)
+                file.write(bytes_recv)
 
     def send(self, msg: dict, crypt=True):
         if crypt:
@@ -57,37 +55,23 @@ class My_Socket:
         sleep(0.1)
         self.socket.send(msg)
 
-    def send_file(self, path):
+    def send_file(self, path, packet_count):
         temp = 0
-        temp2 = 0
-        balken_size = 10
         with open(path, "rb") as file:
-            while True:
+            for packet_counter in range(packet_count):
                 file_bytes = file.read(buffer_recv)
-                print("-------------------------------")
-                print(file_bytes)
-                print("-------------------------------")
                 self.socket.send(file_bytes)
-                if not file_bytes:
-                    time.sleep(0.5)
-                    self.socket.send(b'a')
-                    time.sleep(0.5)
-                    send_empty(self.socket)
-                    time.sleep(0.5)
-                    self.socket.send(b'b')
-                    print("break")
-                    break
-                else:
-                    temp += sys.getsizeof(file_bytes)
-                    load_value = round((temp / os.path.getsize(path)) * balken_size)
-                    if load_value == temp2:
-                        continue
-                    temp2 = load_value
-                    if load_value <= balken_size:
-                        #sys.stdout.write('\r' + f"8{r'=' * load_value}D")
-                        sys.stdout.write('\r' + f"[{r'#'*load_value}{' '*(load_value*-1+balken_size)}]")
+
+                load_value = round((packet_counter / packet_count) * balken_size)
+                if load_value == temp:
+                    continue
+                temp = load_value
+
+                if load_value <= balken_size:
+                    #sys.stdout.write('\r' + f"8{r'=' * load_value}D")
+                    sys.stdout.write('\r' + f"[{r'#'*load_value}{' '*(load_value*-1+balken_size)}]")
             sys.stdout.write('\r')
-        print("file zuende")
+        print("file zu ende" + " "*(balken_size - 12))
 
     def close(self):
         try:
@@ -127,8 +111,3 @@ def bytes2json(bytes_, recursive=False):
             json_[key] = str(temp, "utf-8")
 
     return json_
-
-
-def send_empty(sock):
-    print(type(sock))
-    sock.send(b" ")

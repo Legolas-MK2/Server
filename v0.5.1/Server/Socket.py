@@ -1,5 +1,6 @@
 # public module
 import json
+import os
 import socket
 import sys
 from time import sleep
@@ -10,7 +11,7 @@ import Cipher
 
 
 encoding = "utf-8"
-buffer_recv = 1024
+buffer_recv = 4096
 
 
 class My_Socket:
@@ -36,18 +37,11 @@ class My_Socket:
         sleep(0.1)
         self.socket.send(msg)
 
-    def file_stream(self, sock_author):
-        recv = sock_author.socket.recv(buffer_recv)
-        while recv:
-            sleep(0.1)
-            self.socket.send(recv)
-            print("warte auf neues")
-            sleep(0.1)
+    def file_stream(self, sock_author, packet_count):
+        for _ in range(packet_count):
             recv = sock_author.socket.recv(buffer_recv)
-            print("-----------------------------------------")
-            print(recv)
-            print("-----------------------------------------")
-        self.socket.send(b"")
+            self.socket.send(recv)
+        print("\n\n\n")
         print("stream ende")
 
 

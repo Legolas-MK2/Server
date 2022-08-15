@@ -19,7 +19,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-class client_handle(threading.Thread):
+class client_handler(threading.Thread):
     global client_list
 
     def __init__(self, id_, sock):
@@ -83,23 +83,6 @@ class client_handle(threading.Thread):
                             }})
             print(f"Der Client {self.Name} wurde geschlossen")
             client_list.pop(self.Name)
-        elif parameter["command"] == "#F":
-            receiver = parameter["receiver"]
-            if receiver not in client_list:
-                return
-            print(f"{self.Name} --> {receiver}")
-            print("msg = file")
-            print(f"filename = {parameter['filename']}")
-            client_list[receiver].sock.send({
-                "author": "Server",
-                "message": {
-                    "command": "#F",
-                    "filename": parameter["filename"]
-
-                }
-            })
-            client_list[receiver].sock.file_stream(self.sock)
-
         elif parameter == "#O":
             pass
         else:
@@ -107,14 +90,45 @@ class client_handle(threading.Thread):
                   f"die Nachricht '{parameter}' zusenden ohne das der Server eine Antwort hat{bcolors.END}")
 
     def forwarding(self, msg):
+        if msg["receiver"] not in client_list:
+            print(f"{bcolors.WARNING}Der Client {msg['receiver']} wurde nicht gefunden{bcolors.END}")
+            return
+
+        if msg.get("type") == "text":
+            self.text_msg(msg)
+        elif msg.get("type") == "file":
+            self.file_msg(msg)
+
+    def file_msg(self, msg):
+        receiver = msg["receiver"]
+        msg = msg["message"]
+        packet_count = msg["packet_count"]
+
+        if receiver not in client_list:
+            return
+
+        print(f"{self.Name} --> {receiver}")
+        print("msg = file")
+        print(f"filename = {msg['file_name']}")
+
+        client_list[receiver].sock.send({
+            "author": self.Name,
+            "type": "file",
+            "message": {
+                "file_name": msg["file_name"],
+                "packet_count": packet_count
+
+            }
+        })
+        client_list[receiver].sock.file_stream(self.sock, int(packet_count))
+
+    def text_msg(self, msg):
         name_receiver = msg["receiver"]
         receiver = client_list.get(name_receiver)
-        if not receiver:
-            print(f"{bcolors.WARNING}Der Client {name_receiver} wurde nicht gefunden{bcolors.END}")
-            return
 
         print(f"{self.Name} --> {name_receiver}")
         print("msg ->", msg["message"])
+
         receiver.sock.send({"author": self.Name,
                             "message": msg["message"]
                             })
@@ -157,7 +171,7 @@ def main():
     for id in range(max_user):
         print("Warte auf neue Verbindung...")
         (socket_, addr) = server_socket.accept()
-        client_list[str(id) + " "] = client_handle(id, socket_)
+        client_list[str(id) + " "] = client_handler(id, socket_)
         client_list[str(id) + " "].start()
         print(bcolors.OKGREEN + "Ein neuer Client hat sich verbunden" + bcolors.END)
 

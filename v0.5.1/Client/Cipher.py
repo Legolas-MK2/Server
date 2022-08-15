@@ -30,7 +30,10 @@ def RSA_decrypt(sk, c):
 
 def AES_encrypt_file(filename, key):
     global chunks
-    out_file_name = "endcrypted-" + os.path.basename(filename)
+
+    if not os.path.exists(r"temp"):
+        os.mkdir("temp")
+    out_file_name = "temp/crypted-" + os.path.basename(filename)
     filesize = str(os.path.getsize(filename)).zfill(16)
     IV = Random.new().read(16)
     entcryptor = AES.new(key, AES.MODE_CFB, IV)
