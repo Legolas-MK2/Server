@@ -60,7 +60,6 @@ class Read_Thread(threading.Thread):
                 for user in users.items():
                     if recv["author"] in user[0]:
                         if recv.get("type") == "text":
-                            print("get text")
                             self.text_msg(recv)
                         elif recv.get("type") == "file":
                             self.file_msg(recv)

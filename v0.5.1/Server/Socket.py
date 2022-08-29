@@ -39,7 +39,7 @@ class My_Socket:
 
     def file_stream(self, sock_author, packet_count):
         for _ in range(packet_count):
-            recv = sock_author.socket.recv(buffer_recv)
+            recv = sock_author.__socket.recv(buffer_recv)
             self.socket.send(recv)
         print("\n\n\n")
         print("stream ende")

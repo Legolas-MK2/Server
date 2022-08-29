@@ -1,11 +1,8 @@
-json format (base64 entcode)
-    json Unterverzeichniss base64 codieren
-send file
 logs
 better console output
 debug client
     name
-
-Singel Client class
+    file
+    
 add friend system
 frontend
