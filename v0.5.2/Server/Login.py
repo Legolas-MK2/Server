@@ -1,4 +1,4 @@
-import Cipher
+import cipher
 import Socket
 
 
@@ -24,9 +24,9 @@ def int_to_bytes(x: int) -> bytes:
 
 def get_key(sock: Socket.My_Socket) -> (bytes, bytes):
     pk = sock.read(False)
-    key = Cipher.generate_key(20)
+    key = cipher.generate_key(20)
     print(f"{key = }")
-    msg = Cipher.RSA_encrypt(pk, key)
+    msg = cipher.RSA_encrypt(pk, key)
     sock.send(msg, False)
     return pk, key
 

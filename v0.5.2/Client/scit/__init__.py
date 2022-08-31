@@ -1,5 +1,4 @@
-#from .Cipher import AES_decrypt_file
-from . import Cipher
-from . import Login
-from . import Socket
+from . import cipher
+from . import login
+from . import socket
 

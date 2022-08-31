@@ -2,10 +2,10 @@ import os
 import sys
 import threading
 
-from . import Cipher
-from . import Login
-from .Socket import My_Socket
-from .Socket import buffer_recv
+from . import cipher
+from . import login
+from .socket import My_Socket
+from .socket import buffer_recv
 
 
 class Client:
@@ -26,7 +26,7 @@ class Client:
 
         try:
             # set public-key private-key AES-key for Client Server communication
-            self.pk, self.sk, self.__socket.key = Login.get_server_keys(self.__socket)
+            self.pk, self.sk, self.__socket.key = login.get_server_keys(self.__socket)
             self.running = True
         except ConnectionError:
             pass
@@ -44,10 +44,10 @@ class Client:
             print(self.__name)
             return
 
-        self.__name = Login.set_name(self.__socket, name)
+        self.__name = login.set_name(self.__socket, name)
 
         if self.__name:  # if the name is valid the AES keys are set for the other clients
-            self.dict_clients = Login.get_clients_keys(self.__socket, self.__name)
+            self.dict_clients = login.get_clients_keys(self.__socket, self.__name)
             threading.Thread(target=self.__recv).start()
 
         return self.__name
@@ -66,8 +66,8 @@ class Client:
             return
 
         msg = bytes(msg, "utf-8")
-        msg = Cipher.AES_encrypt_text(msg, self.dict_clients[name])
-        msg = Login.bytes_to_int(msg)
+        msg = cipher.AES_encrypt_text(msg, self.dict_clients[name])
+        msg = login.bytes_to_int(msg)
 
         self.__socket.send({
             "author": self.__name,
@@ -112,8 +112,8 @@ class Client:
 
             elif mode == "+":
                 key = msg["key"]
-                key = Login.int_to_bytes(int(key))
-                key = Cipher.RSA_decrypt(self.sk, key)
+                key = login.int_to_bytes(int(key))
+                key = cipher.RSA_decrypt(self.sk, key)
                 self.dict_clients[user_name] = key
 
     def send_file(self, receiver, file_path):
@@ -121,7 +121,7 @@ class Client:
             return
 
         basename = os.path.basename(file_path)
-        Cipher.AES_encrypt_file(file_path, self.dict_clients[receiver])
+        cipher.AES_encrypt_file(file_path, self.dict_clients[receiver])
         file_path = "temp/crypted-" + basename
 
         packet_count = round((os.path.getsize(file_path) / buffer_recv) + .5)
@@ -154,13 +154,13 @@ class Client:
             os.remove(rf"temp\crypted-{msg['file_name']}")
             self.close()
         #  decrypt file
-        Cipher.AES_decrypt_file(self.filepath, msg["file_name"], self.dict_clients[recv['author']])
+        cipher.AES_decrypt_file(self.filepath, msg["file_name"], self.dict_clients[recv['author']])
 
     def __text_msg(self, recv):
         #  decrypt message
         msg = int(recv["message"])
-        msg = Login.int_to_bytes(msg)
-        msg = Cipher.AES_decrypt_text(msg, self.dict_clients[recv['author']])
+        msg = login.int_to_bytes(msg)
+        msg = cipher.AES_decrypt_text(msg, self.dict_clients[recv['author']])
         msg = str(msg, "utf-8")
         recv["message"] = msg
 

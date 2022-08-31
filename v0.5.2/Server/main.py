@@ -69,7 +69,10 @@ class client_handler(threading.Thread):
 
     def error(self):
         self.running = False
-        self.sub_from_onlinelist(self.Name)
+        try:
+            self.sub_from_onlinelist(self.Name)
+        except ConnectionError:
+            pass
 
         if self.Name == "":  # hat der Client schon ein Name
             print(f"{bcolors.FAIL}Die Verbindung vom Client mit der ID {self.id} ist abgestürzt {bcolors.END}")

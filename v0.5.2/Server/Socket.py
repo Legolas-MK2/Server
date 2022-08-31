@@ -7,7 +7,7 @@ from time import sleep
 from base64 import b64encode, b64decode
 
 # own module
-import Cipher
+import cipher
 
 
 encoding = "utf-8"
@@ -22,7 +22,7 @@ class My_Socket:
     def read(self, crypt=True):
         recv = self.socket.recv(buffer_recv)
         if crypt:
-            recv = Cipher.AES_decrypt_text(recv, self.key)
+            recv = cipher.AES_decrypt_text(recv, self.key)
             recv = recv.decode("utf-8")
             recv = bytes2json(recv)
 
@@ -32,7 +32,7 @@ class My_Socket:
     def send(self, msg: dict, crypt=True):
         if crypt:
             msg = json2bytes(msg)
-            msg = Cipher.AES_encrypt_text(msg, self.key)
+            msg = cipher.AES_encrypt_text(msg, self.key)
 
         sleep(0.1)
         self.socket.send(msg)

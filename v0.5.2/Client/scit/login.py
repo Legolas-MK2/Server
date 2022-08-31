@@ -1,8 +1,7 @@
 # public module
 
 # own module
-from . import Cipher
-from . import Socket
+from . import cipher
 
 
 ip = "127.0.0.1"
@@ -10,12 +9,12 @@ port = 5000
 
 
 def get_server_keys(sock):
-    pk, sk = Cipher.RSA_generate_pk_sk()
+    pk, sk = cipher.RSA_generate_pk_sk()
 
     sock.send(pk, False)
     key = sock.read(False)
 
-    key_server = Cipher.RSA_decrypt(sk, key)
+    key_server = cipher.RSA_decrypt(sk, key)
     return pk, sk, key_server
 
 
@@ -36,7 +35,7 @@ def set_name(sock, name):
 
 def get_clients_keys(sock, username):
     users: dict = {}
-    users[username] = Cipher.generate_key(20)
+    users[username] = cipher.generate_key(20)
     while True:
         recv = sock.read()
         recv = recv["message"]
@@ -47,8 +46,8 @@ def get_clients_keys(sock, username):
         pk = recv["key"]
 
         pk = int_to_bytes(int(pk))
-        bkey = Cipher.generate_key(20)
-        key = Cipher.RSA_encrypt(pk, bkey)
+        bkey = cipher.generate_key(20)
+        key = cipher.RSA_encrypt(pk, bkey)
         key = str(bytes_to_int(key))
         users[name] = bkey
 
