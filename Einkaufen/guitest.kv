@@ -1,10 +1,12 @@
+
+
 <Manager>:
     Screen:
         name: "main"
         BoxLayout:
             orientation: 'vertical'
 
-            MDToolbar:
+            MDTopAppBar:
                 title: 'Main'
                 right_action_items: [["refresh", lambda x: root.refresh()]]
 
@@ -25,30 +27,32 @@
         BoxLayout:
             orientation: 'vertical'
 
-            MDToolbar:
+            MDTopAppBar:
                 title: 'Neues Element'
 
 
             BoxLayout:
                 orientation: 'vertical'
+                spacing: 5
+                padding: 5
                 Label:
                     text: "Menge"
                     color: 0,0,0,1
-                    size_hint: 1,0.1
+                    size_hint: 1,0.2
 
                 TextInput:
                     id: count
                     pos_hint: {"center_x": .5, "center_y": .5}
                     multiline: False
                     input_filter: "int"
-                    size_hint: 0.9,0.3
+                    size_hint: 0.9,1
 
-                BoxLayout:
-                    size_hint: 1,0.15
-                    orientation: "horizontal"
+                GridLayout:
+                    rows: 2
+                    size_hint: 1,1.5
+                    #orientation: "horizontal"
                     Button:
                         text: "1"
-
                         on_release:
                             count.text = "1"
                     Button:
@@ -89,18 +93,19 @@
                             count.text = "10"
 
                 Label:
-                    size_hint: 1,0.1
+                    size_hint: 1,0.3
                 Label:
                     text: "Produkt"
                     color: 0,0,0,1
-                    size_hint: 1,0.1
+                    size_hint: 1,0.2
                 TextInput:
                     id: Produkt
                     pos_hint: {"center_x": .5, "center_y": .5}
                     multiline: False
-                    size_hint: 0.9,0.3
+                    size_hint: 0.9,1
                 MDList:
                     id: list_Produkt
+                    size_hint: 1, 0.5
                 Label:
 
             BoxLayout:
@@ -110,12 +115,12 @@
                     on_release:
                         root.current = 'main'
                         root.transition.direction = 'down'
-
+                Label:
                 MDRaisedButton:
+                    halign: 'right'
                     text: "Weiter"
                     md_bg_color: app.theme_cls.primary_color
                     on_release:
-                        root.send_new_element(count.text, Produkt.text)
                         root.new_element(count.text, Produkt.text)
                         count.text = ""
                         Produkt.text = ""

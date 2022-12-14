@@ -3,7 +3,7 @@ import time
 import cProfile
 import pstats
 
-from scit.client import Client
+from scit_client.client import Client
 
 
 class client(Client):
@@ -12,15 +12,17 @@ class client(Client):
         self.set_name("a")
 
     def read(self, recv):
+        print(recv)
         self.close()
 
 
 with cProfile.Profile() as pr:
-    start = time.perf_counter()
     c = client()
     c.send("a", "my message")
+    start = time.perf_counter()
     while c.running:
-        continue
+        pass
+    print(time.perf_counter()-start)
 
 stats = pstats.Stats(pr)
 stats.sort_stats(pstats.SortKey.TIME)

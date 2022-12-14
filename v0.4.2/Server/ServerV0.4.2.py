@@ -23,7 +23,7 @@ class bcolors:
 
 
 class client(threading.Thread):
-    global client_list
+    global list_client
     global temp
 
     def __init__(self, ID, Socket):
@@ -65,7 +65,7 @@ class client(threading.Thread):
             self.set_key()
 
             self.Name = self.get_name()
-            client_list[self.Name] = client_list.pop(str(self.ID)+" ")
+            list_client[self.Name] = list_client.pop(str(self.ID) + " ")
             self.connect_to_all()
 
             self.running = True
@@ -77,7 +77,7 @@ class client(threading.Thread):
 
             self.running = False
             self.sub_from_onlinelist(self.Name)
-            client_list.pop(self.Name)
+            list_client.pop(self.Name)
 
         print(f"Der Thread vom Client {self.Name if len(self.Name)> 0 else self.ID} hat sich geschlossen")
 
@@ -96,13 +96,13 @@ class client(threading.Thread):
                 print("name error")
                 self.Send("e")
                 continue
-            elif len(client_list) == 0:
+            elif len(list_client) == 0:
                 self.Send(" ")
                 print(f"{bcolors.OKGREEN}Der Nutzer {self.Name} hat sich eingeloggt und hat die ID {self.ID} bekommen{bcolors.END}")
                 return Name
             continue_ = False
-            for s in client_list:
-                if client_list[s].Name == Name:
+            for s in list_client:
+                if list_client[s].Name == Name:
                     self.Send("e")
                     continue_ = True
             if continue_:
@@ -113,20 +113,20 @@ class client(threading.Thread):
             return Name
 
     def connect_to_all(self):
-        for c in client_list:
-            if client_list[c].Name != self.Name \
+        for c in list_client:
+            if list_client[c].Name != self.Name \
                     and c[-1] != " ":
-                pk = self.bytes_to_int(client_list[c].pk)
+                pk = self.bytes_to_int(list_client[c].pk)
                 pk = str(pk)
 
-                self.Send(client_list[c].Name + " " + pk)
+                self.Send(list_client[c].Name + " " + pk)
                 recv = self.Read().split(" ")
-                if client_list[c].Name == recv[0]:
-                    client_list[c].Send("Server")
-                    client_list[c].Send("#O + " + self.Name + " " + recv[1])
+                if list_client[c].Name == recv[0]:
+                    list_client[c].Send("Server")
+                    list_client[c].Send("#O + " + self.Name + " " + recv[1])
                 else:
                     print(f"{bcolors.WARNING}Warning: in connect_to_all")
-                    print(f"client_list[c].Name ='{client_list[c].Name}'")
+                    print(f"client_list[c].Name ='{list_client[c].Name}'")
                     print(f"recv[0] ='{recv[0]}'{bcolors.END}")
         self.Send("e")
 
@@ -141,7 +141,7 @@ class client(threading.Thread):
             self.sub_from_onlinelist(self.Name)
 
             print(f"Der Client {self.Name} wurde geschlossen")
-            client_list.pop(self.Name)
+            list_client.pop(self.Name)
 
         elif parameter == "#O":
             pass
@@ -160,16 +160,16 @@ class client(threading.Thread):
             print(f"{bcolors.WARNING}die Nachricht hat kein inhalt{bcolors.END}")
             return
 
-        if Empfänger_Name not in client_list.keys():
+        if Empfänger_Name not in list_client.keys():
             print(f"{bcolors.WARNING}Der Client {Empfänger_Name} existiert nicht{bcolors.END}");
             return
 
         print(f"{self.Name} --> {Empfänger_Name}")
         print("msg ->", msg)
-        client_list[Empfänger_Name].Send_von(self.Name, msg)
+        list_client[Empfänger_Name].Send_von(self.Name, msg)
 
     def add_to_onlinelist(self, name):
-        global client_list
+        global list_client
 
         if len(name) < 1:
             return
@@ -185,7 +185,7 @@ class client(threading.Thread):
                 pass
 
     def sub_from_onlinelist(self, name):
-        global client_list
+        global list_client
 
         if len(name) < 1:
             return
@@ -206,7 +206,7 @@ class client(threading.Thread):
         return x.to_bytes((x.bit_length() + 7) // 8, "little")
 
 temp = {}
-client_list = {}
+list_client = {}
 
 if __name__ == '__main__':
     Nutzer_max = 10
@@ -218,8 +218,8 @@ if __name__ == '__main__':
         try:
             print("Warte auf neue Verbindung...")
             (sock, addr) = server_socket.accept()
-            client_list[str(i)+" "] = client(i, sock)
-            client_list[str(i)+" "].start()
+            list_client[str(i) + " "] = client(i, sock)
+            list_client[str(i) + " "].start()
             print(bcolors.OKGREEN + "Ein neuer Client hat sich verbunden" + bcolors.END)
         except:
             print(bcolors.WARNING + "ein Problem mit dem aktzeptieren" + bcolors.END)

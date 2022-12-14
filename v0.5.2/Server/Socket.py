@@ -1,13 +1,11 @@
 # public module
 import json
-import os
 import socket
-import sys
 from time import sleep
 from base64 import b64encode, b64decode
 
 # own module
-import cipher
+import Cipher
 
 
 encoding = "utf-8"
@@ -22,7 +20,7 @@ class My_Socket:
     def read(self, crypt=True):
         recv = self.socket.recv(buffer_recv)
         if crypt:
-            recv = cipher.AES_decrypt_text(recv, self.key)
+            recv = Cipher.AES_decrypt_text(recv, self.key)
             recv = recv.decode("utf-8")
             recv = bytes2json(recv)
 
@@ -32,10 +30,17 @@ class My_Socket:
     def send(self, msg: dict, crypt=True):
         if crypt:
             msg = json2bytes(msg)
-            msg = cipher.AES_encrypt_text(msg, self.key)
+            msg = Cipher.AES_encrypt_text(msg, self.key)
 
         sleep(0.1)
         self.socket.send(msg)
+
+    def read_row(self):
+        recv = self.socket.recv(buffer_recv)
+        return recv
+
+    def send_row(self, row):
+        self.socket.send(row)
 
     def file_stream(self, sock_author, packet_count):
         for _ in range(packet_count):

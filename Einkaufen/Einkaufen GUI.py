@@ -10,18 +10,17 @@ from kivy.core.window import Window
 from kivy.uix.screenmanager import ScreenManager
 from kivy.graphics import Color, Rectangle
 import time
-from Einkaufen_Client import Client
 
 Window.size = (300, 500)
+
 
 def callback(instance):
     print('The button <%s> is being pressed' % instance.text)
 
+
 class Manager(ScreenManager):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.client = Client()
-        self.client.start()
 
     def refresh(self):
         list_add = self.client.list_add
@@ -113,10 +112,12 @@ class Manager(ScreenManager):
 
         self.ids.list_one.add_widget(boxlayout)
 
+
 class ScreenApp(MDApp):
     def build(self):
 
         return Manager()
+
 
 Builder.load_file("guitest.kv")
 

@@ -3,7 +3,7 @@ import os
 import subprocess
 import time
 
-from scit.client import Client
+from scit_client.client import Client
 
 
 class client(Client):

@@ -20,7 +20,7 @@ class bcolors:
 
 
 class client_handle(threading.Thread):
-    global client_list
+    global list_client
 
     def __init__(self, id_, sock):
         threading.Thread.__init__(self)
@@ -38,13 +38,13 @@ class client_handle(threading.Thread):
             self.sock.key = self.key
 
             #   set Name
-            self.Name = Login.get_name(self.sock, client_list)
+            self.Name = Login.get_name(self.sock, list_client)
             print(f"{bcolors.OKGREEN}Der Nutzer {self.Name} hat sich eingeloggt "
                   f"und hat die ID {self.id} bekommen{bcolors.END}")
-            client_list[self.Name] = client_list.pop(str(self.id)+" ")
+            list_client[self.Name] = list_client.pop(str(self.id) + " ")
 
             #   send all other clients keys
-            Login.connect_to_all(self.sock, client_list, self.Name)
+            Login.connect_to_all(self.sock, list_client, self.Name)
 
             #   client-main-loop
             self.running = True
@@ -64,10 +64,10 @@ class client_handle(threading.Thread):
 
             if self.Name == "":    # hat der Client schon ein Name
                 print(f"{bcolors.FAIL}Die Verbindung vom Client mit der ID {self.id} ist abgestürzt {bcolors.END}")
-                client_list.pop(f"{self.id} ")
+                list_client.pop(f"{self.id} ")
             else:
                 print(f"{bcolors.FAIL}Die Verbindung vom Client mit dem Namen {self.Name} ist abgestürzt {bcolors.END}")
-                client_list.pop(self.Name)
+                list_client.pop(self.Name)
 
         print(f"Der Thread vom Client {self.Name if len(self.Name)> 0 else self.id} hat sich geschlossen")
 
@@ -82,7 +82,7 @@ class client_handle(threading.Thread):
                                 "command": "#C"
                             }})
             print(f"Der Client {self.Name} wurde geschlossen")
-            client_list.pop(self.Name)
+            list_client.pop(self.Name)
 
         elif parameter == "#O":
             pass
@@ -92,7 +92,7 @@ class client_handle(threading.Thread):
 
     def forwarding(self, msg):
         name_receiver = msg["receiver"]
-        receiver = client_list.get(name_receiver)
+        receiver = list_client.get(name_receiver)
         if not receiver:
             print(f"{bcolors.WARNING}Der Client {name_receiver} wurde nicht gefunden{bcolors.END}")
             return
@@ -105,7 +105,7 @@ class client_handle(threading.Thread):
 
     @staticmethod
     def sub_from_onlinelist(name):
-        global client_list
+        global list_client
 
         if len(name) < 1:
             return
@@ -141,14 +141,14 @@ def main():
     for id in range(max_user):
         print("Warte auf neue Verbindung...")
         (socket_, addr) = server_socket.accept()
-        client_list[str(id) + " "] = client_handle(id, socket_)
-        client_list[str(id) + " "].start()
+        list_client[str(id) + " "] = client_handle(id, socket_)
+        list_client[str(id) + " "].start()
         print(bcolors.OKGREEN + "Ein neuer Client hat sich verbunden" + bcolors.END)
 
     print(bcolors.WARNING + "\n\n die maximale Anzahl an Clients haben sich verbunden" + bcolors.END)
 
 
-client_list = {}
+list_client = {}
 
 if __name__ == '__main__':
     main()

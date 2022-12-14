@@ -22,7 +22,7 @@ class Client:
         self.__socket = My_Socket()
 
         # connect to Server
-        self.__socket.try_connect("192.168.178.75", 5000)
+        self.__socket.try_connect("127.0.0.1", 5000)
 
         try:
             # set public-key private-key AES-key for Client Server communication
@@ -171,4 +171,4 @@ class Client:
         if self.running and self.__socket:
             self.__socket.close()
             self.dict_clients = {}
-
+        self.running = False
