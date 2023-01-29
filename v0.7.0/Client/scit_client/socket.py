@@ -23,14 +23,15 @@ class My_Socket:
         self.port = 5000
 
     def try_connect(self, ip, port):
+        self.ip = ip
+        self.port = port
         while True:
             try:
-                self.ip = ip
-                self.port = port
                 self.socket.connect((ip, port))
-                return self.socket  # Server found
             except ConnectionRefusedError:
                 continue            # no Server found
+            else:
+                return self.socket  # Server found
 
     def read(self, crypt=True) -> dict:
         recv = self.socket.recv(buffer_recv)
@@ -52,7 +53,8 @@ class My_Socket:
                 time.sleep(0.1)
                 ex = sock_temp.connect_ex((self.ip, self.port + 2))  # Fileport is Textport + 1
             with open(rf"temp\recv-crypted-{filename}", "wb") as file:
-                for _ in range(packet_count):
+                for i in range(packet_count):
+                    print(i)
                     bytes_recv = sock_temp.recv(buffer_recv)
                     file.write(bytes_recv)
 
@@ -74,7 +76,9 @@ class My_Socket:
                 print(f"{ex = }")
             with open(path, "rb") as file:
                 temp = 0
+                time.sleep(2)
                 for packet_counter in range(packet_count):
+                    print(packet_counter)
                     file_bytes = file.read(buffer_recv)
                     sock_temp.send(file_bytes)
 
@@ -86,7 +90,7 @@ class My_Socket:
                     if load_value <= balken_size:
                         #sys.stdout.write('\r' + f"8{r'=' * load_value}D")
                         sys.stdout.write('\r' + f"[{r'#'*load_value}{'-'*(load_value*-1+balken_size)}]")
-                sys.stdout.write('\r')
+                sys.stdout.write('\r                ')
 
     def close(self):
         try:

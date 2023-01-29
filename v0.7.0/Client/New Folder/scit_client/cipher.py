@@ -1,6 +1,5 @@
 import os
 import sys
-
 from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA512
@@ -31,7 +30,10 @@ def RSA_decrypt(sk, c):
 
 def AES_encrypt_file(filename, key):
     global chunks
-    out_file_name = "endcrypted-" + os.path.basename(filename)
+
+    if not os.path.exists(r"temp"):
+        os.mkdir("temp")
+    out_file_name = "temp/send-crypted-" + os.path.basename(filename)
     filesize = str(os.path.getsize(filename)).zfill(16)
     IV = Random.new().read(16)
     entcryptor = AES.new(key, AES.MODE_CFB, IV)
@@ -48,22 +50,21 @@ def AES_encrypt_file(filename, key):
                 f_output.write(entcryptor.encrypt(chunk))
 
 
-def AES_decrypt_file(filename, key):
+def AES_decrypt_file(folder, filename, key):
     global chunks
-    out_file_name = filename.split("-")[-1]
-    with open(filename, "rb") as f_input:
-
+    filename = filename.split("-")[-1]
+    with open("temp/recv-crypted-" + filename, "rb") as f_input:
         filesize = int(f_input.read(16))
         IV = f_input.read(16)
         decryptor = AES.new(key, AES.MODE_CFB, IV)
 
-        with open(out_file_name, "wb") as f_output:
+        if not os.path.exists(folder):
+            os.mkdir(folder)
+        with open(folder + filename, "wb") as f_output:
             while True:
                 chunk = f_input.read(chunks)
-
                 if len(chunk) == 0:
                     break
-
                 f_output.write(decryptor.decrypt(chunk))
                 f_output.truncate(filesize)
 
@@ -92,20 +93,12 @@ def generate_key(size):
 chunks = 32 * 1024
 if __name__ == "__main__":
     #AES
-    key = b" "
-    for i in range(10000):
-        msg = key
-        key = generate_key(100)
-        print(sys.getsizeof(key))
-        print(sys.getsizeof(AES_encrypt_text(data=msg, key=key)))
-    exit()
-    #crypt_text = AES_encrypt_text(data=b'\\xc8\\xb3.h\\x14\\xd3\\xa6\\x8e\\x8fi\\xb4U\\xdc\\x05\\xab\\xc2\\xc5\\xdafw\\xc9q\\xa3Q|\\xc5\\xf9\\x85\\xd3\\x18\\xc4#', key=b'\\xc5\\x99\\xfb\\xa5G\\xc2@Z+J\\xc2\\xd2\\xb5[\\xf3\\x17')
-    #print(crypt_text)
-    print(AES_decrypt_text(data=b'\\xc8\\xb3.h\\x14\\xd3\\xa6\\x8e\\x8fi\\xb4U\\xdc\\x05\\xab\\xc2\\xc5\\xdafw\\xc9q\\xa3Q|\\xc5\\xf9\\x85\\xd3\\x18\\xc4#', key=b'\\xc5\\x99\\xfb\\xa5G\\xc2@Z+J\\xc2\\xd2\\xb5[\\xf3\\x17'))
-
+    pk, sk = RSA_generate_pk_sk()
+    print(len(Random.get_random_bytes(200)))
+    """
     #RSA
     pk, sk = RSA_generate_pk_sk()
-    c = RSA_encrypt(pk, b"das ist eine nachicht")
+    c = RSA_encrypt(pk, b"a")
     print(c)
     m = RSA_decrypt(sk, c)
-    print(m)
+    print(m)"""

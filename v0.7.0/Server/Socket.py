@@ -44,11 +44,15 @@ class My_Socket:
     def send_row(self, row):
         self.socket.send(row)
 
-    def file_stream(self, sock_receiver, packet_count, filename, sender_name):                             #
+    def file_stream(self, sock_receiver, packet_count, filename, sender_name):
+        print("pos 1")#
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as recv_sock_temp:   # build a extra socket
-            recv_sock_temp.bind((self.ip, self.port + 1))                           # for the receiving Client
-            recv_sock_temp.listen(1)                                                #
-            recv_sock, _ = recv_sock_temp.accept()                                          #
+            recv_sock_temp.bind((self.ip, self.port + 1))
+            print("pos 2")# for the receiving Client
+            recv_sock_temp.listen(1)
+            print("pos 3")#
+            recv_sock, _ = recv_sock_temp.accept()
+            print("pos 4")#
 
             sock_receiver.send({
                 "author": sender_name,
@@ -59,13 +63,18 @@ class My_Socket:
 
                 }
             })
+            print("pos 5")
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as send_sock_temp:   #
+                print("pos 6")
                 send_sock_temp.bind((self.ip, self.port + 2))                           # build a extra socket
                 send_sock_temp.listen(1)                                                # for the sending Client
                 send_sock, _ = send_sock_temp.accept()                                  #
 
+                print("pos 7")
                 with send_sock:
-                    for _ in range(packet_count):              #
+                    print("pos 8")
+                    for i in range(packet_count):              #
+                        print(i)
                         recv = recv_sock.recv(buffer_recv)     # send file
                         send_sock.send(recv)                   #
                     print("\n\n\n")

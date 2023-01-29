@@ -1,6 +1,8 @@
 # public
+import json
 import socket
 import threading
+import time
 
 import Login
 import Socket
@@ -27,7 +29,6 @@ class Client_Handler(threading.Thread):
         self.sock = sock
         self.Name = ""
         self.running = False
-        self.key = None
         self.pk = pk
         self.filestream = {}
         self.channel = []
@@ -35,8 +36,7 @@ class Client_Handler(threading.Thread):
     def run(self):
         try:
             #   set AES key
-            self.key = Login.get_key(self.sock, self.pk)
-            self.sock.key = self.key
+            self.sock.key = Login.get_key(self.sock, self.pk)
 
             #   set Name
             self.Name = Login.get_name(self.sock, list_client)
@@ -44,11 +44,27 @@ class Client_Handler(threading.Thread):
                 self.error()
                 return
 
+            with open("config.json") as f:
+                server_config = json.load(f)
+
+            if not server_config.get("names"):
+                server_config["names"] = []
+
+            if self.Name in server_config["names"]:
+                print("erneutes anmelden")
+            else:
+                server_config["names"].append(self.Name)
+                with open("config.json", "w") as f:
+                    json.dump(server_config, f)
+
             print(f"{bcolors.OKGREEN}Der Nutzer {self.Name} hat sich eingeloggt "
                   f"und hat die ID {self.id} bekommen{bcolors.END}")
+
             list_client[self.Name] = list_client.pop(str(self.id) + " ")
+
             #   send all other clients keys
             Login.connect_to_all(self.sock, list_client, self.Name)
+
             #   client-main-loop
             self.running = True
             while self.running:
@@ -63,13 +79,14 @@ class Client_Handler(threading.Thread):
 
         except ConnectionError:
             self.error()
-        #except ValueError:
-        #    self.error()
+        except ValueError:
+            self.error()
 
         print(f"Der Thread vom Client {self.Name if len(self.Name)> 0 else self.id} hat sich geschlossen")
 
     def error(self):
         self.running = False
+
         try:
             self.sub_from_onlinelist(self.Name)
         except ConnectionError:
@@ -93,8 +110,10 @@ class Client_Handler(threading.Thread):
                 "message": {
                     "command": "#C"
                 }})
+
             print(f"Der Client {self.Name} wurde geschlossen")
             list_client.pop(self.Name)
+
         elif parameter == "#O":
             pass
         else:
@@ -110,6 +129,18 @@ class Client_Handler(threading.Thread):
             self.text_msg(msg)
         elif msg.get("type") == "file":
             self.file_msg(msg)
+        elif msg.get("type") == "save text":
+            self.save_text_msg(msg)
+        elif msg.get("type") == "save file":
+            self.save_file_msg(msg)
+        else:
+            print("ungültiger type angegeben")
+
+    def save_text_msg(self, msg):
+        print("save text")
+
+    def save_file_msg(self, msg):
+        print("save file")
 
     def file_msg(self, msg):
         receiver = msg["receiver"]
@@ -123,8 +154,13 @@ class Client_Handler(threading.Thread):
         print("msg = file")
         print(f"filename = {msg['file_name']}")
 
-        threading.Thread(target=self.sock.file_stream,
+        threading.Thread(target=self.sock.file_stream,name=f"file {self.Name} --> {receiver} {msg['file_name']}",
                          args=[list_client[receiver].sock, int(packet_count), msg['file_name'], self.Name]).start()
+        #while True:
+        #    for thread in threading.enumerate():
+        #        print(thread.name)
+        #    time.sleep(1)
+
 
     def text_msg(self, msg):
         name_receiver = msg["receiver"]
@@ -195,27 +231,37 @@ class Channel:
 
 
 def main():
-    max_user = 15
-    ip = "127.0.0.1"
-    port = 5000
+    ip = server_config["ip"]
+    port = server_config["port"]
 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((ip, port))
-    server_socket.listen(max_user)
+    server_socket.listen()
 
-    for id in range(max_user):
+    current_id = server_config["current_id"]
+    while True:
         print("Warte auf neue Verbindung...")
         (socket_, addr) = server_socket.accept()
         sock = Socket.My_Socket(socket_, ip, port)
         recv = sock.read_row()
-        list_client[str(id) + " "] = Client_Handler(id, sock, recv)
-        list_client[str(id) + " "].start()
+        list_client[str(current_id) + " "] = Client_Handler(current_id, sock, recv)
+        list_client[str(current_id) + " "].start()
         print(bcolors.OKGREEN + "Ein neuer Client hat sich verbunden" + bcolors.END)
-
-    print(bcolors.WARNING + "\n\n die maximale Anzahl an Clients haben sich verbunden" + bcolors.END)
+        current_id += 1
+        server_config["current_id"] = current_id
+        with open("config.json", "w") as f:
+            json.dump(server_config, f)
 
 
 list_client = {}
+server_config = {}
 
 if __name__ == '__main__':
+    h_name = socket.gethostname()
+    IP_addres = socket.gethostbyname(h_name)
+    print("Host Name is:" + h_name)
+    print("Computer IP Address is:" + IP_addres)
+    with open("config.json") as f:
+        server_config = json.load(f)
+    print(server_config)
     main()

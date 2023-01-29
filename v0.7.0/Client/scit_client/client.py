@@ -1,6 +1,8 @@
 import os
 import sys
 import threading
+import types
+import asyncio
 
 from . import cipher
 from . import login
@@ -11,25 +13,52 @@ from .socket import buffer_recv
 class Client:
     running = False
 
-    def __init__(self):
-        self.__name = ""  # username
+    def __init__(self, async_=False):
+        self.__name: str = ""  # username
 
         self.dict_clients = {}  # dict with all other clients
 
         self.filepath = "files/"  # the downloaded files are stored under the path
 
+        # bind() function
+        self._on_message = self.empty
+        self._on_close = self.empty
+        self._on_connected = self.empty
+
         # make Socket
         self.__socket = My_Socket()
+        if async_:
+            asyncio.run(self._async_start_connection())
+        else:
+            self._start_connection()
 
+    async def _async_start_connection(self):
         # connect to Server
-        self.__socket.try_connect("127.0.0.1", 5000)
+        self.__socket.try_connect("192.168.178.75", 5000)   #  "5.230.75.187", 5000
 
         try:
             # set public-key private-key AES-key for Client Server communication
             self.pk, self.sk, self.__socket.key = login.get_server_keys(self.__socket)
-            self.running = True
         except ConnectionError:
-            pass
+            self.close()
+
+        self.running = True
+        self._on_connected()
+
+    def _start_connection(self):
+        # connect to Server
+        self.__socket.try_connect("192.168.178.75", 5000)
+
+        try:
+            # set public-key private-key AES-key for Client Server communication
+            self.pk, self.sk, self.__socket.key = login.get_server_keys(self.__socket)
+        except ConnectionError:
+            self.close()
+
+        self.running = True
+        self._on_connected()
+
+    def empty(self, *args, **kwargs): pass
 
     def get_name(self):
         return self.__name
@@ -74,10 +103,21 @@ class Client:
             "receiver": name,
             "type": "text",
             "message": msg})
+
         return "OK"
 
     def read(self, recv: dict):
         pass
+
+    def bind(self, on_message=None, on_close=None, on_connected=None):
+        if on_message and isinstance(on_message, types.MethodType):
+            self._on_message = on_message
+
+        if on_close and isinstance(on_close, types.MethodType):
+            self._on_close = on_close
+
+        if on_connected and isinstance(on_connected, types.MethodType):
+            self._on_connected = on_connected
 
     def __recv(self):   # this method runs in the extra thread and waits for a message
         while self.running:
@@ -89,6 +129,7 @@ class Client:
             if recv.get("author") == "Server":
                 self.__Server(recv["message"])
             else:
+                self._on_message(recv)
                 if recv.get("type") == "file":
                     self.__file_msg(recv)
                 elif recv.get("type") == "text":
@@ -153,6 +194,7 @@ class Client:
         except ConnectionError:
             os.remove(rf"temp\recv-crypted-{msg['file_name']}")
             self.close()
+
         #  decrypt file
         cipher.AES_decrypt_file(self.filepath, msg["file_name"], self.dict_clients[recv['author']])
 
@@ -164,7 +206,6 @@ class Client:
         msg = str(msg, "utf-8")
         recv["message"] = msg
 
-        #  execute read-methode
         self.read(recv)
 
     def close(self):
@@ -172,3 +213,5 @@ class Client:
             self.__socket.close()
             self.dict_clients = {}
         self.running = False
+
+

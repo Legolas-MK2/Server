@@ -3,6 +3,8 @@ import threading
 
 from scit_client.client import Client as Cl
 
+os.environ['TERM'] = 'xterm'
+
 
 class Client(Cl):
     def __init__(self):
@@ -18,7 +20,7 @@ class Client(Cl):
     def run(self):
         while self.running:
             command = input(">>")
-            command = command.lower()
+            os.system('cls' if os.name == 'nt' else 'clear')
 
             if " " in command:
                 command = command.split(" ")
@@ -73,7 +75,6 @@ class Client(Cl):
             msg = " ".join(command[2:])
 
             threading.Thread(target=self.send_file, args=(receiver, msg)).start()
-
         else:
             print(f"Command {command[0]} nicht gefunden")
 
