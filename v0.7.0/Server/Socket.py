@@ -54,15 +54,6 @@ class My_Socket:
             recv_sock, _ = recv_sock_temp.accept()
             print("pos 4")#
 
-            sock_receiver.send({
-                "author": sender_name,
-                "type": "file",
-                "message": {
-                    "file_name": filename,
-                    "packet_count": packet_count
-
-                }
-            })
             print("pos 5")
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as send_sock_temp:   #
                 print("pos 6")
@@ -72,11 +63,13 @@ class My_Socket:
 
                 print("pos 7")
                 with send_sock:
-                    print("pos 8")
+
                     for i in range(packet_count):              #
                         print(i)
                         recv = recv_sock.recv(buffer_recv)     # send file
-                        send_sock.send(recv)                   #
+                        print("IU§AHI")
+                        send_sock.send(recv)
+                        print("dadwuazghldiuaw")
                     print("\n\n\n")
                     print("stream ende")
 

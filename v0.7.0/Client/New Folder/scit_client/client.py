@@ -123,6 +123,7 @@ class Client:
         while self.running:
             try:
                 recv = self.__socket.read()
+                print(recv)
             except OSError:
                 self.running = False
                 break
@@ -190,13 +191,12 @@ class Client:
 
         #   get file
         try:
-            self.__socket.read_file(msg["file_name"], int(msg["packet_count"]))
+            threading.Thread(target=self.__socket.read_file, args= (msg["file_name"], int(msg["packet_count"]), self.dict_clients[recv['author']])).start()
         except ConnectionError:
             os.remove(rf"temp\recv-crypted-{msg['file_name']}")
             self.close()
 
-        #  decrypt file
-        cipher.AES_decrypt_file(self.filepath, msg["file_name"], self.dict_clients[recv['author']])
+
 
     def __text_msg(self, recv):
         #  decrypt message

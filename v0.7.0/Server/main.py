@@ -150,11 +150,21 @@ class Client_Handler(threading.Thread):
         if receiver not in list_client:
             return
 
+        list_client[receiver].sock.send({
+            "author": self.Name,
+            "type": "file",
+            "message": {
+                "file_name": msg['file_name'],
+                "packet_count": packet_count
+
+            }
+        })
+
         print(f"{self.Name} --> {receiver}")
         print("msg = file")
         print(f"filename = {msg['file_name']}")
 
-        threading.Thread(target=self.sock.file_stream,name=f"file {self.Name} --> {receiver} {msg['file_name']}",
+        threading.Thread(target=self.sock.file_stream,
                          args=[list_client[receiver].sock, int(packet_count), msg['file_name'], self.Name]).start()
         #while True:
         #    for thread in threading.enumerate():

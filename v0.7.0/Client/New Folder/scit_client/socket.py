@@ -27,7 +27,8 @@ class My_Socket:
         self.port = port
         while True:
             try:
-                self.socket.connect((ip, port))
+                t = self.socket.connect((ip, port))
+                print(t)
             except ConnectionRefusedError:
                 continue            # no Server found
             else:
@@ -43,20 +44,26 @@ class My_Socket:
         sleep(0.1)
         return recv
 
-    def read_file(self, filename, packet_count):
+    def read_file(self, filename, packet_count, key):
         if not os.path.exists(r"temp"):
             os.mkdir("temp")
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_temp:
             ex = 0
+            print("test")
             while not ex:
                 time.sleep(0.1)
-                ex = sock_temp.connect_ex((self.ip, self.port + 2))  # Fileport is Textport + 1
+                print(ex)
+                ex = sock_temp.connect_ex((self.ip, self.port + 1))  # Fileport is Textport + 1
             with open(rf"temp\recv-crypted-{filename}", "wb") as file:
                 for i in range(packet_count):
-                    print(i)
+                    print(f"{i}")
                     bytes_recv = sock_temp.recv(buffer_recv)
                     file.write(bytes_recv)
+        #  decrypt file
+        cipher.AES_decrypt_file(rf"file\\", filename, key)
+        print("fertig")
+
 
     def send(self, msg: dict, crypt=True):
         if crypt:
@@ -68,17 +75,20 @@ class My_Socket:
 
     def send_file(self, path, packet_count):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_temp:
-            ex = 0
-            if not ex:
+
+            while True:
                 time.sleep(0.1)
-                print(f"{ex = }")
-                ex = sock_temp.connect((self.ip, self.port + 1))  # Fileport is Textport + 1
-                print(f"{ex = }")
+                try:
+                    sock_temp.connect((self.ip, 5002))
+                except ConnectionRefusedError:
+                    pass
+                else:
+                    break
             with open(path, "rb") as file:
                 temp = 0
                 time.sleep(2)
                 for packet_counter in range(packet_count):
-                    print(packet_counter)
+                    print(f"{packet_counter}")
                     file_bytes = file.read(buffer_recv)
                     sock_temp.send(file_bytes)
 
@@ -91,6 +101,7 @@ class My_Socket:
                         #sys.stdout.write('\r' + f"8{r'=' * load_value}D")
                         sys.stdout.write('\r' + f"[{r'#'*load_value}{'-'*(load_value*-1+balken_size)}]")
                 sys.stdout.write('\r                ')
+        print("fertig")
 
     def close(self):
         try:
