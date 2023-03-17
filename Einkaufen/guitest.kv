@@ -1,4 +1,19 @@
+<Main_Element@OneLineListItem>:
+    orientation: "horizontal"
+    height: 40
+    IconLeftWidget:
+        icon: "trash-can-outline"
+        on_press: root.del_element()
 
+    IconRightWidget:
+        icon: "plus"
+        size_hint_x: 0.5
+        on_press: root.add_element()
+
+    IconRightWidget:
+        icon: "minus"
+        size_hint_x: 0.5
+        on_press: root.sub_element()
 
 <Manager>:
     Screen:
@@ -13,6 +28,7 @@
             ScrollView:
                 MDList:
                     id: list_one
+
 
             MDFloatingActionButton:
                 elevation: 8
@@ -40,7 +56,11 @@
                     color: 0,0,0,1
                     size_hint: 1,0.2
 
-                TextInput:
+                MDTextField:
+                    hint_text: "Count"
+                    max_text_length: 3
+                    helper_text_mode: "on_error"
+                    helper_text: "max. 999"
                     id: count
                     pos_hint: {"center_x": .5, "center_y": .5}
                     multiline: False

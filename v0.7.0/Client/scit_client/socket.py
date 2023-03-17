@@ -28,7 +28,6 @@ class My_Socket:
         while True:
             try:
                 t = self.socket.connect((ip, port))
-                print(t)
             except ConnectionRefusedError:
                 continue            # no Server found
             else:
@@ -45,23 +44,22 @@ class My_Socket:
         return recv
 
     def read_file(self, filename, packet_count, key):
-        if not os.path.exists(r"temp"):
-            os.mkdir("temp")
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_temp:
-            ex = 0
-            print("test")
-            while not ex:
+            ex = 1
+            while ex:
                 time.sleep(0.1)
-                print(ex)
-                ex = sock_temp.connect_ex((self.ip, self.port + 1))  # Fileport is Textport + 1
-            with open(rf"temp\recv-crypted-{filename}", "wb") as file:
-                for i in range(packet_count):
-                    print(f"{i}")
-                    bytes_recv = sock_temp.recv(buffer_recv)
-                    file.write(bytes_recv)
-        #  decrypt file
-        cipher.AES_decrypt_file(rf"file\\", filename, key)
+
+                ex = sock_temp.connect_ex((self.ip, self.port + 1))
+            # recv data
+            encrypted_data = b''
+            chunk = sock_temp.recv(buffer_recv)
+            while chunk:
+                encrypted_data += chunk
+                chunk = sock_temp.recv(buffer_recv)
+
+        #  decrypt data
+        cipher.AES_decrypt_file(encrypted_data, key, outfile=f"file/{filename}")   #, outfile=f"file/{filename}"
 
     def send(self, msg: dict, crypt=True):
         if crypt:
@@ -71,36 +69,21 @@ class My_Socket:
         sleep(0.1)
         self.socket.send(msg)
 
-    def send_file(self, path, packet_count):
+    def send_file(self, path, packet_count, recver_key):
+        ciphertext = cipher.AES_encrypt_file(path, recver_key)
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_temp:
 
             while True:
                 time.sleep(0.1)
                 try:
-                    sock_temp.connect((self.ip, 5002))
+                    sock_temp.connect((self.ip, self.port + 2))
 
                 except ConnectionRefusedError:
                     pass
                 else:
                     break
-            with open(path, "rb") as file:
-                temp = 0
-                time.sleep(2)
-                for packet_counter in range(packet_count):
-                    print(f"{packet_counter}")
-                    file_bytes = file.read(buffer_recv)
-                    sock_temp.send(file_bytes)
+            sock_temp.sendall(ciphertext)
 
-                    load_value = round((packet_counter / packet_count) * balken_size)
-                    if load_value == temp:
-                        continue
-                    temp = load_value
-
-                    if load_value <= balken_size:
-                        #sys.stdout.write('\r' + f"8{r'=' * load_value}D")
-                        sys.stdout.write('\r' + f"[{r'#'*load_value}{'-'*(load_value*-1+balken_size)}]")
-                sys.stdout.write('\r                ')
-        print("fertig")
     def close(self):
         try:
             self.send({"receiver": "Server",

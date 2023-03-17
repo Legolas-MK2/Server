@@ -1,5 +1,4 @@
 import os
-import sys
 from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.Hash import SHA512
@@ -28,45 +27,24 @@ def RSA_decrypt(sk, c):
     return m
 
 
-def AES_encrypt_file(filename, key):
-    global chunks
-
-    if not os.path.exists(r"temp"):
-        os.mkdir("temp")
-    out_file_name = "temp/send-crypted-" + os.path.basename(filename)
-    filesize = str(os.path.getsize(filename)).zfill(16)
+def AES_encrypt_file(file_path, key):
+    with open(file_path, 'rb') as file:
+        file_bytes = file.read()
     IV = Random.new().read(16)
-    entcryptor = AES.new(key, AES.MODE_CFB, IV)
-    with open(filename, "rb") as f_input:
-        with open(out_file_name, "wb") as f_output:
-            f_output.write(filesize.encode("utf-8"))
-            f_output.write(IV)
-            while True:
-                chunk = f_input.read(chunks)
-                if len(chunk) == 0:
-                    break
-                if len(chunk) % 16 != 0:
-                    chunk += b' ' * (16 - (len(chunk) % 16))
-                f_output.write(entcryptor.encrypt(chunk))
+    cipher = AES.new(key, AES.MODE_CFB, IV)
+    encrypted_bytes = IV + cipher.encrypt(file_bytes)
+
+    return encrypted_bytes
 
 
-def AES_decrypt_file(folder, filename, key):
-    global chunks
-    filename = filename.split("-")[-1]
-    with open("temp/recv-crypted-" + filename, "rb") as f_input:
-        filesize = int(f_input.read(16))
-        IV = f_input.read(16)
-        decryptor = AES.new(key, AES.MODE_CFB, IV)
-
-        if not os.path.exists(folder):
-            os.mkdir(folder)
-        with open(folder + filename, "wb") as f_output:
-            while True:
-                chunk = f_input.read(chunks)
-                if len(chunk) == 0:
-                    break
-                f_output.write(decryptor.decrypt(chunk))
-                f_output.truncate(filesize)
+def AES_decrypt_file(file_bytes, key, outfile=None):
+    cipher = AES.new(key, AES.MODE_CFB, file_bytes[:16])
+    decrypted_bytes = cipher.decrypt(file_bytes[16:])
+    if outfile:
+        with open(outfile, "wb") as f:
+            f.write(decrypted_bytes)
+    else:
+        return decrypted_bytes
 
 
 def AES_encrypt_text(data, key):
@@ -92,13 +70,8 @@ def generate_key(size):
 
 chunks = 32 * 1024
 if __name__ == "__main__":
-    #AES
-    pk, sk = RSA_generate_pk_sk()
-    print(len(Random.get_random_bytes(200)))
-    """
-    #RSA
-    pk, sk = RSA_generate_pk_sk()
-    c = RSA_encrypt(pk, b"a")
-    print(c)
-    m = RSA_decrypt(sk, c)
-    print(m)"""
+    key = b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10'
+    crypt_bytes = AES_encrypt_file("client.py", key)
+    print(crypt_bytes)
+    decrypt = AES_decrypt_file(crypt_bytes, key)
+    print(decrypt)

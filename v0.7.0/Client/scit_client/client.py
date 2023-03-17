@@ -13,25 +13,25 @@ from .socket import buffer_recv
 class Client:
     running = False
 
-    def __init__(self, async_=False):
+    def __init__(self, start_async=False):
         self.__name: str = ""  # username
 
         self.dict_clients = {}  # dict with all other clients
 
-        self.filepath = "files/"  # the downloaded files are stored under the path
+        self.config = {
+            "filepath": "files/"  # the downloaded files are stored under the path
+        }
 
         # bind() function
         self._on_message = self.empty
         self._on_close = self.empty
         self._on_connected = self.empty
-
         # make Socket
         self.__socket = My_Socket()
-        if async_:
+        if start_async:
             asyncio.run(self._async_start_connection())
         else:
             self._start_connection()
-
     async def _async_start_connection(self):
         # connect to Server
         self.__socket.try_connect("192.168.178.75", 5000)   #  "5.230.75.187", 5000
@@ -47,14 +47,13 @@ class Client:
 
     def _start_connection(self):
         # connect to Server
-        self.__socket.try_connect("192.168.178.75", 5000)
-
+        #self.__socket.try_connect("5.230.75.187", 5000)
+        self.__socket.try_connect("127.0.0.1", 5000)
         try:
             # set public-key private-key AES-key for Client Server communication
             self.pk, self.sk, self.__socket.key = login.get_server_keys(self.__socket)
         except ConnectionError:
             self.close()
-
         self.running = True
         self._on_connected()
 
@@ -122,12 +121,11 @@ class Client:
     def __recv(self):   # this method runs in the extra thread and waits for a message
         while self.running:
             try:
-
                 recv = self.__socket.read()
-                print(recv)
             except OSError:
                 self.running = False
                 break
+
             if recv.get("author") == "Server":
                 self.__Server(recv["message"])
             else:
@@ -164,8 +162,6 @@ class Client:
             return
 
         basename = os.path.basename(file_path)
-        cipher.AES_encrypt_file(file_path, self.dict_clients[receiver])
-        file_path = "temp/send-crypted-" + basename
 
         packet_count = round((os.path.getsize(file_path) / buffer_recv) + .5)
         send_packet_count = packet_count
@@ -183,7 +179,7 @@ class Client:
                 "packet_count": send_packet_count
             }})
 
-        self.__socket.send_file(file_path, packet_count)
+        self.__socket.send_file(file_path, packet_count, self.dict_clients[receiver])
         #os.remove(file_path)
         return "ok"
 
@@ -191,11 +187,8 @@ class Client:
         msg = recv["message"]
 
         #   get file
-        try:
-            threading.Thread(target=self.__socket.read_file, args= (msg["file_name"], int(msg["packet_count"]), self.dict_clients[recv['author']])).start()
-        except ConnectionError:
-            os.remove(rf"temp\recv-crypted-{msg['file_name']}")
-            self.close()
+        t = threading.Thread(target=self.__socket.read_file, args= (msg["file_name"], int(msg["packet_count"]), self.dict_clients[recv['author']]))
+        t.start()
 
     def __text_msg(self, recv):
         #  decrypt message

@@ -37,6 +37,7 @@ class Client(Cl):
         keywords_clear = ["cls", "clear"]
         keywords_online = ["online", "online_list"]
         keywords_send_file = ["send_file", "file"]
+        keywords_option = ["option", "options", "settings"]
 
         if command[0] in keywords_send:
             if len(command) < 3:
@@ -75,6 +76,11 @@ class Client(Cl):
             msg = " ".join(command[2:])
 
             threading.Thread(target=self.send_file, args=(receiver, msg)).start()
+        elif command[0] in keywords_option:
+            possible_options = []
+            if len(command) <= 1 and command[1] not in possible_options:
+                print("es gibt die Optionen:\n")
+                return
         else:
             print(f"Command {command[0]} nicht gefunden")
 

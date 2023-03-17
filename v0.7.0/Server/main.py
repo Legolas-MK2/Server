@@ -2,7 +2,7 @@
 import json
 import socket
 import threading
-import time
+import multiprocessing
 
 import Login
 import Socket
@@ -30,7 +30,7 @@ class Client_Handler(threading.Thread):
         self.Name = ""
         self.running = False
         self.pk = pk
-        self.filestream = {}
+        self.filestreams = []
         self.channel = []
 
     def run(self):
@@ -81,6 +81,10 @@ class Client_Handler(threading.Thread):
             self.error()
         except ValueError:
             self.error()
+        for stream in self.filestreams:
+            print(stream)
+            stream.terminate()
+            stream.join()
 
         print(f"Der Thread vom Client {self.Name if len(self.Name)> 0 else self.id} hat sich geschlossen")
 
@@ -163,15 +167,14 @@ class Client_Handler(threading.Thread):
         print(f"{self.Name} --> {receiver}")
         print("msg = file")
         print(f"filename = {msg['file_name']}")
-
-        threading.Thread(target=self.sock.file_stream,
-                         args=[list_client[receiver].sock, int(packet_count), msg['file_name'], self.Name]).start()
-        #while True:
-        #    for thread in threading.enumerate():
-        #        print(thread.name)
-        #    time.sleep(1)
-
-
+        stream = multiprocessing.Process(
+            target=self.sock.file_stream,
+            args=[list_client[receiver].sock,
+                  int(packet_count),
+                  msg['file_name'],
+                  self.Name])
+        stream.start()
+        self.filestreams.append(stream)
     def text_msg(self, msg):
         name_receiver = msg["receiver"]
         receiver = list_client.get(name_receiver)

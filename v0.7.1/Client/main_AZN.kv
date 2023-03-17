@@ -1,0 +1,168 @@
+<Element@MDCard>:
+    size_hint: 1, None
+    size: 800, 260
+    elevation: 6
+
+    BoxLayout:
+
+        orientation:'vertical'
+        BoxLayout:
+            pos_hint: {'center_x': .5, 'center_y': .5}
+            size_hint: .9, None
+            size: 1, 20
+            Label:
+                id: lbl_soll_time
+                size_hint: None, None
+                size: 50, 20
+                text: "soll-zeit = 00:00"
+
+            Label:
+                id: date
+                size_hint: 1, None
+                size: 1, 20
+                text: "root.date"
+
+            Label:
+                id: lbl_ist_time
+                size_hint: None, None
+                size: 50, 20
+                text: "ist-zeit = 00:00"
+
+        GridLayout:
+            rows: 2
+            size_hint: 1, None
+            size: 1, 150
+            spacing: 10
+            padding: 10
+            MDTextField:
+                id: as
+                hint_text: "Arbeitszeit Start"
+                mode: "rectangle"
+            MDTextField:
+                id: p1s
+                hint_text: "Pause 1 Start"
+                mode: "rectangle"
+            MDTextField:
+                id: p2s
+                hint_text: "Pause 2 Start"
+                mode: "rectangle"
+            MDTextField:
+                id: p3s
+                hint_text: "Pause 3 Start"
+                mode: "rectangle"
+            MDTextField:
+                id: ae
+                hint_text: "Arbeitszeit Ende"
+                mode: "rectangle"
+            MDTextField:
+                id: p1e
+                hint_text: "Pause 1 Ende"
+                mode: "rectangle"
+            MDTextField:
+                id: p2e
+                hint_text: "Pause 2 Ende"
+                mode: "rectangle"
+            MDTextField:
+                id: p3e
+                hint_text: "Pause 3 Ende"
+                mode: "rectangle"
+                input_type: 'number'
+        BoxLayout:
+            GridLayout:
+                rows: 2
+                size_hint: 1, None
+                size:42,50
+                Label:
+                    text: "GLAZ"
+                Label:
+                    text: "Krank"
+                Label:
+                    text: "Urlaub"
+                Label:
+                    text: "Schule"
+                MDCheckbox:
+                    group: 'group'
+                    #size_hint: None, None
+                    #size: dp(48), dp(48)
+                MDCheckbox:
+                    group: 'group'
+                    #size_hint: None, None
+                    #size: dp(48), dp(48)
+                MDCheckbox:
+                    group: 'group'
+                    #size_hint: None, None
+                    #size: dp(48), dp(48)
+                MDCheckbox:
+                    group: 'group'
+                    #size_hint: None, None
+                    #size: dp(48), dp(48)
+            MDTextField:
+                pos_hint: {'center_y': .5}
+                hint_text: "Bemerkungen"
+        MDSeparator:
+            color: (1,1,1,0)
+            height: "10dp"
+        MDRoundFlatButton:
+            size:1,30
+            text: "Abschicken"
+            text_color: "white"
+            size_hint: 1,None
+            on_release:
+                root.delete_element()
+
+
+
+
+
+<MainWindow>:
+    name: "main"
+
+    GridLayout:
+        cols:1
+
+        GridLayout:
+            cols: 2
+
+            Label:
+                text: "Password: "
+
+            TextInput:
+                id: passw
+                multiline: False
+
+        Button:
+            text: "Submit"
+            on_release:
+                app.root.current = "second" if passw.text == "pwd" else "main"
+                root.manager.transition.direction = "left"
+
+
+<SecondWindow>:
+    name: "second"
+
+    BoxLayout:
+        orientation: "vertical"
+        MDTopAppBar:
+            left_action_items:[["microsoft-xbox-controller-menu", lambda x: root.set_screen("main")]]
+            right_action_items:[["signal-cellular-outline"]]
+            #spacing: 10
+            #padding: 10
+            material_style: "M3"
+            anchor_title: "center"
+            title: ("Negativ zeit" if root.overtime < 0 else "Positiv") + " " + str(root.overtime) + "min"
+            md_bg_color: (40/255, 91/255, 36/255, 1) if root.overtime >= 0 else (91/255, 36/255, 36/255, 1)
+
+            #Button:
+            #MDCard:
+#
+            #    md_bg_color: (40/255, 91/255, 36/255, 1) if root.overtime >= 0 else (91/255, 36/255, 36/255, 1)
+            #    size_hint: None,1
+            #    size: 100, 1
+            #    Label:
+            #        text: str(root.overtime)
+        MDScrollView:
+            MDList:
+                id: list
+                padding: 10
+                spacing: 10
+

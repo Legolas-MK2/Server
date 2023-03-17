@@ -45,33 +45,26 @@ class My_Socket:
         self.socket.send(row)
 
     def file_stream(self, sock_receiver, packet_count, filename, sender_name):
-        print("pos 1")#
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as recv_sock_temp:   # build a extra socket
-            recv_sock_temp.bind((self.ip, self.port + 1))
-            print("pos 2")# for the receiving Client
-            recv_sock_temp.listen(1)
-            print("pos 3")#
-            recv_sock, _ = recv_sock_temp.accept()
-            print("pos 4")#
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as recv_sock_temp:   # build a extra socket
+                recv_sock_temp.bind((self.ip, self.port + 1))
+                recv_sock_temp.listen(1)
+                recv_sock, _ = recv_sock_temp.accept()
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as send_sock_temp:   #
 
-            print("pos 5")
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as send_sock_temp:   #
-                print("pos 6")
-                send_sock_temp.bind((self.ip, self.port + 2))                           # build a extra socket
-                send_sock_temp.listen(1)                                                # for the sending Client
-                send_sock, _ = send_sock_temp.accept()                                  #
+                    send_sock_temp.bind((self.ip, self.port + 2))                           # build a extra socket
+                    send_sock_temp.listen(1)                                                # for the sending Client
+                    send_sock, _ = send_sock_temp.accept()                                  #
 
-                print("pos 7")
-                with send_sock:
-
-                    for i in range(packet_count):              #
-                        print(i)
-                        recv = recv_sock.recv(buffer_recv)     # send file
-                        print("IU§AHI")
-                        send_sock.send(recv)
-                        print("dadwuazghldiuaw")
-                    print("\n\n\n")
-                    print("stream ende")
+                    recv = send_sock.recv(buffer_recv)
+                    while recv:
+                        recv_sock.send(recv)
+                        recv = send_sock.recv(buffer_recv)
+                    recv_sock.close()
+                    send_sock.close()
+        except OSError:
+            recv_sock.close()
+            send_sock.close()
 
 
 def json2bytes(json_, recursive=False):

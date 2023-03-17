@@ -6,10 +6,8 @@ from . import cipher
 
 def get_server_keys(sock):
     pk, sk = cipher.RSA_generate_pk_sk()
-
     sock.send(pk, False)
     key = sock.read(False)
-
     key_server = cipher.RSA_decrypt(sk, key)
     return pk, sk, key_server
 
