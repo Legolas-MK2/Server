@@ -16,7 +16,6 @@ Window.size = (300, 500)
 
 def callback(instance):
     pass
-    #print('The button <%s> is being pressed' % instance.text)
 
 
 class Main_Element(TwoLineAvatarIconListItem):
