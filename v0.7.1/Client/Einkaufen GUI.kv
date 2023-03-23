@@ -1,0 +1,136 @@
+<Main_Element@OneLineListItem>:
+    orientation: "horizontal"
+    height: 40
+    IconLeftWidget:
+        icon: "trash-can-outline"
+        on_press: root.del_element()
+
+    IconRightWidget:
+        icon: "plus"
+        size_hint_x: 0.5
+        on_press: root.add_element()
+
+    IconRightWidget:
+        icon: "minus"
+        size_hint_x: 0.5
+        on_press: root.sub_element()
+
+<Manager>:
+    Screen:
+        name: "main"
+        BoxLayout:
+            orientation: 'vertical'
+
+            MDTopAppBar:
+                title: 'Main'
+                right_action_items: [["refresh", lambda x: root.refresh()]]
+
+            ScrollView:
+                MDList:
+                    id: list_one
+
+
+            MDFloatingActionButton:
+                elevation: 8
+                icon: 'plus'
+                pos_hint: {'center_x': .5}
+                on_release:
+                    root.current = 'window_add'
+                    root.transition.direction = 'up'
+
+    Screen:
+        name: 'window_add'
+        BoxLayout:
+            spacing: 5
+            padding: 5
+            orientation: 'vertical'
+
+            MDTopAppBar:
+                title: 'Neues Element'
+
+            MDCard:
+                orientation: "vertical"
+                padding: "8dp"
+                size_hint: .9, 2.2
+                pos_hint: {"center_x": .5, "center_y": .5}
+
+                MDLabel:
+                    text: "Count"
+                    theme_text_color: "Secondary"
+                    size_hint_y: None
+                    height: self.texture_size[1]
+
+                MDSeparator:
+                    height: "1dp"
+
+                MDTextField:
+                    hint_text: "Count"
+                    max_text_length: 3
+                    helper_text_mode: "on_error"
+                    helper_text: "max. 999"
+                    id: count
+                    pos_hint: {"center_x": .5, "center_y": .5}
+                    multiline: False
+                    input_filter: "int"
+                    size_hint: 0.9, None
+                    size_y: 220
+                    text: "1"
+
+                MDSlider:
+                    id: slider
+                    min: 1
+                    max: 20
+                    value: 1
+                    hint: False
+                    on_value:
+                        count.text = str(int(self.value))
+
+            MDCard:
+                orientation: "vertical"
+                padding: "8dp"
+                size_hint: .9, 4
+                pos_hint: {"center_x": .5, "center_y": .5}
+
+                MDLabel:
+                    text: "Produkt"
+                    theme_text_color: "Secondary"
+                    size_hint_y: None
+                    height: self.texture_size[1]
+
+                MDSeparator:
+                    height: "1dp"
+
+                MDTextField:
+                    hint_text: "Produkt"
+                    max_text_length: 15
+                    helper_text_mode: "on_error"
+                    helper_text: "max. 15 Zeichen"
+                    id: Produkt
+                    pos_hint: {"center_x": .5, "center_y": .5}
+                    multiline: False
+                    size_hint: 0.9, None
+                    size_y: 220
+                ScrollView:
+                    MDList:
+                        id: list_Produkt
+
+
+            BoxLayout:
+                MDRaisedButton:
+                    text: "Zurück"
+                    md_bg_color: app.theme_cls.primary_color
+                    on_release:
+                        root.current = 'main'
+                        root.transition.direction = 'down'
+                Label:
+                MDRaisedButton:
+                    halign: 'right'
+                    text: "Weiter"
+                    md_bg_color: app.theme_cls.primary_color
+                    on_release:
+                        root.new_element(count.text, Produkt.text)
+                        count.text = "1"
+                        Produkt.text = ""
+                        slider.value = 1
+                        app.root.current = 'main'
+                        root.transition.direction = 'down'

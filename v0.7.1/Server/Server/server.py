@@ -233,6 +233,9 @@ class Client_Handler(threading.Thread):
     def on_close(self):
         pass
 
+    def __del__(self):
+        self.error()
+
     @staticmethod
     def sub_from_onlinelist(name):
 
@@ -350,6 +353,9 @@ class Server_Handler():
             json.dump(self.server_config, f)
 
     def __del__(self):
+        global list_client
+
+        del list_client
         try:
             if not self.server_socket:
                 self.server_socket.shutdown(socket.SHUT_RD)

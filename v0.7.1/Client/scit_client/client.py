@@ -35,17 +35,7 @@ class Client:
             self._start_connection()
 
     async def _async_start_connection(self):
-        # connect to Server
-        self.__socket.try_connect("192.168.178.75", 5000)   #  "5.230.75.187", 5000
-
-        try:
-            # set public-key private-key AES-key for Client Server communication
-            self.pk, self.sk, self.__socket.key = login.get_server_keys(self.__socket)
-        except DisconnectServerError:
-            self.close()
-
-        self.running = True
-        self._on_connected()
+        threading.Thread(target=self._start_connection).start()
 
     def _start_connection(self):
         # connect to Server
@@ -169,6 +159,8 @@ class Client:
                 key = login.int_to_bytes(int(key))
                 key = cipher.RSA_decrypt(self.sk, key)
                 self.dict_clients[user_name] = key
+        elif msg["command"] == "#G":
+            pass
 
     def send_file(self, receiver, file_path):
         if not os.path.exists(file_path) or not os.path.isfile(file_path):

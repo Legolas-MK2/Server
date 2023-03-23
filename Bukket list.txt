@@ -1,8 +1,6 @@
 logs
 better console output
-debug client
-    name
-    file
-    
 add friend system
 frontend
+infinity message len
+more private variable
