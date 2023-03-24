@@ -126,7 +126,7 @@ class Client:
                 break
 
             if recv.get("author") == "Server":
-                self.__Server(recv["message"])
+                self.__server(recv["message"])
             else:
                 self._on_message(recv)
                 if recv.get("type") == "file":
@@ -138,7 +138,7 @@ class Client:
                 elif recv.get("type") == "text_group":
                     self.__text_msg_group(recv)
 
-    def __Server(self, msg):
+    def __server(self, msg):
         if msg["command"] == "#C" and not self.running:
             self.__socket.close()
             sys.exit()
@@ -159,8 +159,8 @@ class Client:
                 key = login.int_to_bytes(int(key))
                 key = cipher.RSA_decrypt(self.sk, key)
                 self.dict_clients[user_name] = key
-        elif msg["command"] == "#G":
-            pass
+        elif msg["command"] == "#GA":
+            self.list_groups.append(msg["name"])
 
     def send_file(self, receiver, file_path):
         if not os.path.exists(file_path) or not os.path.isfile(file_path):

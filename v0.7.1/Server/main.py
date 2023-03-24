@@ -1,4 +1,4 @@
-from Server.server import Server_Handler, Client_Handler
+from Server.server import Server_Handler, Client_Handler, Group_Handler
 
 
 class Client(Client_Handler):
@@ -23,5 +23,11 @@ class Server(Server_Handler):
             self.connect_client(class_client)
 
 
+class Group(Group_Handler):
+    def add(self, a):
+        print("djkghafeaukuf")
+
+
 if __name__ == "__main__":
+    Group_Handler = Group
     Server(Client)

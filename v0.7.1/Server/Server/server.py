@@ -33,7 +33,7 @@ class Client_Handler(threading.Thread):
         self.pk = b""
         self.filestreams = []
         self.channel = []
-        self.list_groups = {}
+        self.list_groups: Dict[str, Group_Handler] = {}
 
     def run(self):
 
@@ -65,7 +65,6 @@ class Client_Handler(threading.Thread):
 
         print(f"{bcolors.OKGREEN}Der Nutzer {self.Name} hat sich eingeloggt "
               f"und hat die ID {self.id} bekommen{bcolors.END}")
-        print(list_client)
         list_client[self.Name] = list_client.pop(str(self.id) + " ")
 
         try:
@@ -78,11 +77,11 @@ class Client_Handler(threading.Thread):
                 data = self.sock.read()
                 #   if the message is addressed to the server
                 if data["receiver"] == "Server":
-                    self.client2server(data["message"])
+                    self.__client2server(data["message"])
                     continue
 
                 #   Message forwarding
-                self.forwarding(data)
+                self.__forwarding(data)
         except DisconnectClientError:
             self.error()
 
@@ -93,14 +92,11 @@ class Client_Handler(threading.Thread):
         print(f"Der Thread vom Client {self.Name if len(self.Name)> 0 else self.id} hat sich geschlossen")
 
     def error(self):
-        print("test")
         self.running = False
         try:
-            self.sub_from_onlinelist(self.Name)
+            self.__sub_from_onlinelist(self.Name)
         except ConnectionError:
             pass
-
-
 
         if self.Name == "":  # hat der Client schon ein Name
             print(f"{bcolors.FAIL}Die Verbindung vom Client mit der ID {self.id} ist abgestürzt {bcolors.END}")
@@ -113,12 +109,12 @@ class Client_Handler(threading.Thread):
     def on_finnish_filestream(self):
         pass
 
-    def client2server(self, data: dict):
+    def __client2server(self, data: dict):
         if data["command"] == '#C':
             print(f"Der Client {self.Name} wird geschlossen")
 
             self.running = False
-            self.sub_from_onlinelist(self.Name)
+            self.__sub_from_onlinelist(self.Name)
             self.sock.send({
                 "author": "Server",
                 "message": {
@@ -146,7 +142,7 @@ class Client_Handler(threading.Thread):
                 return
 
             print(f"der client {data.get('client')} wird zu der gruppe {data.get('group')} hinzugefügt")
-            self.list_groups[data["group"]].add(list_client[data["client"]])
+            self.list_groups[data["group"]].add_client(list_client[data["client"]])
         elif self.on_server_message(data):
             pass
         else:
@@ -156,7 +152,7 @@ class Client_Handler(threading.Thread):
     def on_server_message(self, data):
         pass
 
-    def forwarding(self, data):
+    def __forwarding(self, data):
         if data.get("type") == "text":
             if data["receiver"] not in list_client:
                 print(f"{bcolors.WARNING}Der Client {data['receiver']} wurde nicht gefunden{bcolors.END}")
@@ -237,7 +233,7 @@ class Client_Handler(threading.Thread):
         self.error()
 
     @staticmethod
-    def sub_from_onlinelist(name):
+    def __sub_from_onlinelist(name):
 
         if len(name) < 1:
             return
@@ -263,7 +259,7 @@ class Client_Handler(threading.Thread):
     def force_close(self):
         self.running = False
         try:
-            self.sub_from_onlinelist(self.Name)
+            self.__sub_from_onlinelist(self.Name)
             self.sock.send({
                 "author": "Server",
                 "message": {
@@ -275,9 +271,8 @@ class Client_Handler(threading.Thread):
         list_client.pop(self.Name)
 
 
-
 class Group_Handler:
-    def __init__(self, name:str, admin:Client_Handler, size=None):
+    def __init__(self, name: str, admin: Client_Handler, size=None):
         # static count of max members
         self.__size = size
 
@@ -286,11 +281,28 @@ class Group_Handler:
         # dict of all members
         self.__list_members: List[Client_Handler] = [admin]
 
-    def add(self, client: Client_Handler):
+    def get_size(self):
+        return self.__size
+
+    def add_client(self, client: Client_Handler):
         if not self.__size or len(self.__list_members) <= self.__size:
-            self.__list_members.append(client)
+            self.on_add(client)
         else:
             print(f"{client.Name} konnte nicht gespeichert werden")
+
+    def on_add(self, client: Client_Handler):
+        self.add(client)
+
+    def add(self, client: Client_Handler):
+        self.__list_members.append(client)
+        client.sock.send({
+            "author": "Server",
+            "message": {
+                "command": "#GA",
+                "name": self.name,
+                "clients": self.__list_members
+            }})
+        client.list_groups[self.name] = self
 
     def send_text(self, author, message):
         print(f"msg = {message}")
@@ -298,6 +310,7 @@ class Group_Handler:
         for member in self.__list_members:
             member.sock.send({
                     "author": author,
+                    "group": self.name,
                     "type": "text_group",
                     "message": message
                 })
@@ -308,8 +321,8 @@ list_client: Dict[str, Client_Handler] = {}
 file_request = {}
 
 
-class Server_Handler():
-    def __init__(self):#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
+class Server_Handler:
+    def __init__(self):
         self.server_config = {}
         try:
             with open("config.json") as f:

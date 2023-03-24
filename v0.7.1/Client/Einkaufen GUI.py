@@ -26,13 +26,13 @@ class Client(Cl):
         self.group_create("t")
 
     def inc_element(self, name, count):
-        pass
+        self.group_send("t", {"name": name, "mode": "inc", "count": count})
 
     def dec_element(self, name, count):
-        self.group_send("t", {"name": name, "count": count})
+        self.group_send("t", {"name": name, "mode": "dec", "count": count})
 
     def read(self, recv: dict):
-        print(recv)
+        print(f"{recv = }")
 
 
 class Main_Element(TwoLineAvatarIconListItem):
@@ -111,6 +111,9 @@ class Manager(ScreenManager):
             element = Main_Element(name=name, count=count)
             self.ids.list_one.add_widget(element)
 
+    def __del__(self):
+        client.close()
+
 
 class ScreenApp(MDApp):
     def build(self):
@@ -121,6 +124,7 @@ class ScreenApp(MDApp):
 
     def __del__(self):
         client.close()
+
 
 client = Client()
 Builder.load_file("Einkaufen GUI.kv")
