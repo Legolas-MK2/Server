@@ -97,7 +97,7 @@ class My_Socket:
 
     def close(self):
         try:
-            self.send({"receiver": "Server",
+            self.send({"receiver": 0,
                        "message": {
                            "command": "#C"
                        }})

@@ -1,3 +1,5 @@
+import threading
+
 from kivy.lang import Builder
 from kivy.uix.label import Label
 from kivy.uix.popup import Popup
@@ -19,7 +21,7 @@ class Client(Cl):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.manager: Manager = None
-        self.set_name("a")
+        self.set_name("b")
         if not self.get_name():
             print("name already used")
             exit()
@@ -126,9 +128,10 @@ class ScreenApp(MDApp):
         client.close()
 
 
-client = Client()
+client = Client(start_async=True)
 Builder.load_file("Einkaufen GUI.kv")
 
 if __name__ == "__main__":
     ScreenApp().run()
-    client.close()
+    if client:
+        client.close()

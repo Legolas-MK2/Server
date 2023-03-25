@@ -3,6 +3,8 @@ import sys
 import threading
 import types
 import asyncio
+from typing import Dict
+
 
 from . import cipher
 from . import login
@@ -11,13 +13,26 @@ from .socket import buffer_recv
 from .socket import DisconnectServerError
 
 
+class ClientConnection:
+    def __init__(self, _id: int, key: bytes, name: str = None):
+        self.id = _id
+        self.name = name
+        self.key = key
+
+    def send_test(self, msg):
+        pass
+
+    def send_file(self, filepath):
+        pass
+
+
 class Client:
     running = False
 
     def __init__(self, start_async=False):
         self.__name: str = ""  # username
 
-        self.dict_clients = {}  # dict with all other clients
+        self.dict_clients: Dict[int, ClientConnection] = {}  # dict with all other clients
         self.list_groups = []
         self.config = {
             "filepath": "file/"  # the downloaded files are stored under the path
@@ -64,7 +79,7 @@ class Client:
             return
 
         try:
-            self.__name = login.set_name(self.__socket, name)
+            self.__name, id_ = login.set_name(self.__socket, name)
         except DisconnectServerError:
             print("Server Disconnectet")
             self.close()
@@ -72,7 +87,8 @@ class Client:
 
         if self.__name:  # if the name is valid --> the AES keys are set for the other clients
             try:
-                self.dict_clients = login.get_clients_keys(self.__socket, self.__name)
+                self.dict_clients[id_] = ClientConnection(id_, cipher.generate_key(20), self.__name)
+                self.dict_clients = self.dict_clients | login.get_clients_keys(self.__socket)
             except DisconnectServerError:
                 self.close()
             threading.Thread(target=self.__recv).start()
@@ -83,22 +99,29 @@ class Client:
         if not self.running:
             print("send ohne running")
             return
+
         if not self.__name:
             print("name (send)")
             print(self.__name)
             return
 
-        if not self.dict_clients.get(name):
+        print(self.dict_clients)
+        for client in self.dict_clients.values():
+            print(f"{client = }")
+            if client.name == name:
+                key = client.key
+                id_ = client.id
+                break
+        else:
             print("Empfänger nicht in der liste gefunden")
             return
 
         msg = bytes(msg, "utf-8")
-        msg = cipher.AES_encrypt_text(msg, self.dict_clients[name])
+        msg = cipher.AES_encrypt_text(msg, key)
         msg = login.bytes_to_int(msg)
 
         self.__socket.send({
-            "author": self.__name,
-            "receiver": name,
+            "receiver": id_,
             "type": "text",
             "message": msg})
 
@@ -188,7 +211,7 @@ class Client:
 
     def group_create(self, name):
         self.__socket.send({
-            "receiver": "Server",
+            "receiver": 0,
             "message": {
                 "command": "#G",
                 "name": name
@@ -202,7 +225,7 @@ class Client:
 
     def group_add(self, group, client):
         self.__socket.send({
-            "receiver": "Server",
+            "receiver": 0,
             "message": {
                 "command": "#GA",
                 "client": client,
@@ -227,7 +250,9 @@ class Client:
         #  decrypt message
         msg = int(recv["message"])
         msg = login.int_to_bytes(msg)
-        msg = cipher.AES_decrypt_text(msg, self.dict_clients[recv['author']])
+        print(self.dict_clients)
+        print(recv)
+        msg = cipher.AES_decrypt_text(msg, self.dict_clients[recv['author']].key)
         msg = str(msg, "utf-8")
         recv["message"] = msg
 

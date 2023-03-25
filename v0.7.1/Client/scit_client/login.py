@@ -2,6 +2,7 @@
 
 # own module
 from . import cipher
+from .client import ClientConnection
 
 
 def get_server_keys(sock):
@@ -16,37 +17,41 @@ def set_name(sock, name):
     if name[:6] == "Server" or " " in name or name == "":
         return None
 
-    sock.send({"receiver": "Server",
+    sock.send({"receiver": 0,
                "type": "name",
                "message": name})
     recv = sock.read()
 
-    recv = recv.get("message")
-    if recv == "OK":
-        return name
+    msg = recv.get("message")
+    print(recv)
+    id = recv["receiver"]
+    if msg == "OK":
+        return name, id
     else:
-        return None
+        print(msg)
+        return None, None
 
 
-def get_clients_keys(sock, username):
+def get_clients_keys(sock) -> dict:
     users = {}
-    users[username] = cipher.generate_key(20)
     while True:
         recv = sock.read()
         recv = recv["message"]
 
-        if recv == "OK": return users
+        if recv == "OK":
+            return users
 
         name = recv["name"]
         pk = recv["key"]
+        id_ = recv["id"]
 
         pk = int_to_bytes(int(pk))
         bkey = cipher.generate_key(20)
         key = cipher.RSA_encrypt(pk, bkey)
         key = str(bytes_to_int(key))
-        users[name] = bkey
+        users[id_] = ClientConnection(id_, bkey, name)
 
-        sock.send({"author": "Server",
+        sock.send({"author": 0,
                    "receiver": "name",
                    "message": {
                        "name": name,

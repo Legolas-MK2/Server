@@ -45,7 +45,7 @@ class Client_Handler(threading.Thread):
         self.sock.key = login.get_key(self.sock, self.pk)
 
         #   set Name
-        self.Name = login.get_name(self.sock, list_client)
+        self.Name = login.get_name(self.sock, list_client, self.id)
         if self.Name == "":
             self.error()
             return
@@ -65,18 +65,19 @@ class Client_Handler(threading.Thread):
 
         print(f"{bcolors.OKGREEN}Der Nutzer {self.Name} hat sich eingeloggt "
               f"und hat die ID {self.id} bekommen{bcolors.END}")
-        list_client[self.Name] = list_client.pop(str(self.id) + " ")
+        list_client[self.id] = list_client.pop(str(self.id) + " ")
 
         try:
             #   send all other clients keys
-            login.connect_to_all(self.sock, list_client, self.Name)
+            login.connect_to_all(self.sock, list_client, self.Name, self.id)
 
             #   client-main-loop
             self.running = True
             while self.running:
                 data = self.sock.read()
+                data["receiver"] = int(data["receiver"])
                 #   if the message is addressed to the server
-                if data["receiver"] == "Server":
+                if data["receiver"] == 0:
                     self.__client2server(data["message"])
                     continue
 
@@ -104,7 +105,12 @@ class Client_Handler(threading.Thread):
             list_client.pop(f"{self.id} ")
         else:
             print(f"{bcolors.FAIL}Die Verbindung vom Client mit dem Namen {self.Name} ist abgestürzt {bcolors.END}")
-            list_client.pop(self.Name)
+            print(list_client)
+            #TODO
+            try:
+                list_client.pop(self.id)
+            except KeyError:
+                pass
 
     def on_finnish_filestream(self):
         pass
@@ -116,7 +122,7 @@ class Client_Handler(threading.Thread):
             self.running = False
             self.__sub_from_onlinelist(self.Name)
             self.sock.send({
-                "author": "Server",
+                "author": 0,
                 "message": {
                     "command": "#C"
                 }})
@@ -153,22 +159,23 @@ class Client_Handler(threading.Thread):
         pass
 
     def __forwarding(self, data):
+        #TODO what if the receiver not exist
         if data.get("type") == "text":
-            if data["receiver"] not in list_client:
-                print(f"{bcolors.WARNING}Der Client {data['receiver']} wurde nicht gefunden{bcolors.END}")
-                return
+            #if data["receiver"] not in list_client:
+            #    print(f"{bcolors.WARNING}Der Client {data['receiver']} wurde nicht gefunden{bcolors.END}")
+            #    return
 
             self.on_text_message(data)
         elif data.get("type") == "file":
-            if data["receiver"] not in list_client:
-                print(f"{bcolors.WARNING}Der Client {data['receiver']} wurde nicht gefunden{bcolors.END}")
-                return
+            #if data["receiver"] not in list_client:
+            #    print(f"{bcolors.WARNING}Der Client {data['receiver']} wurde nicht gefunden{bcolors.END}")
+            #    return
 
             self.on_file_message(data)
         elif data.get("type") == "text_group":
-            if data["receiver"] not in self.list_groups:
-                print(f"die group {data['receiver']} wurde nicht gefunden")
-                return
+            #if data["receiver"] not in self.list_groups:
+            #    print(f"die group {data['receiver']} wurde nicht gefunden")
+            #    return
             self.list_groups[data["receiver"]].send_text(self.Name, data["message"])
         else:
             print("ungültiger type angegeben")
@@ -180,19 +187,20 @@ class Client_Handler(threading.Thread):
         self.send(data)
 
     def send(self, data):
-        name_receiver = data["receiver"]
-        receiver = list_client.get(name_receiver)
+        print(data)
+        print(list_client)
+        id_receiver = data["receiver"]
+        receiver = list_client[int(id_receiver)]
 
-        print(f"{self.Name} --> {name_receiver}")
+        print(f"{self.Name} --> {id_receiver}")
         print("msg ->", data["message"])
 
         receiver.sock.send(
             {
-                "author": self.Name,
-                "receiver": name_receiver,
+                "author": self.id,
+                "receiver": id_receiver,
                 "type": "text",
-                "message": data["message"]}
-        )
+                "message": data["message"]})
 
     def send_file(self, data):
         receiver = data["receiver"]
@@ -241,7 +249,7 @@ class Client_Handler(threading.Thread):
         for s in list_client:
             if not list_client[s].running:
                 continue
-            j = {"author": "Server",
+            j = {"author": 0,
                  "receiver": list_client[s].Name,
                  "message": {"command": "#O",
                              "mode": "-",
@@ -261,7 +269,7 @@ class Client_Handler(threading.Thread):
         try:
             self.__sub_from_onlinelist(self.Name)
             self.sock.send({
-                "author": "Server",
+                "author": 0,
                 "message": {
                     "command": "#C"
                 }})
@@ -296,7 +304,7 @@ class Group_Handler:
     def add(self, client: Client_Handler):
         self.__list_members.append(client)
         client.sock.send({
-            "author": "Server",
+            "author": 0,
             "message": {
                 "command": "#GA",
                 "name": self.name,
@@ -317,7 +325,7 @@ class Group_Handler:
 
 
 # Global Variable
-list_client: Dict[str, Client_Handler] = {}
+list_client = {}
 file_request = {}
 
 
