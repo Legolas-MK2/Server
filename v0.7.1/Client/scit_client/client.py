@@ -88,7 +88,9 @@ class Client:
         if self.__name:  # if the name is valid --> the AES keys are set for the other clients
             try:
                 self.dict_clients[id_] = ClientConnection(id_, cipher.generate_key(20), self.__name)
-                self.dict_clients = self.dict_clients | login.get_clients_keys(self.__socket)
+                clients_keys = login.get_clients_keys(self.__socket)
+                self.dict_clients.update(clients_keys)
+                print(f"{self.dict_clients = }")
             except DisconnectServerError:
                 self.close()
             threading.Thread(target=self.__recv).start()
@@ -105,10 +107,8 @@ class Client:
             print(self.__name)
             return
 
-        print(self.dict_clients)
         for client in self.dict_clients.values():
-            print(f"{client = }")
-            if client.name == name:
+            if client.name == name or client.id == name:
                 key = client.key
                 id_ = client.id
                 break
@@ -121,7 +121,7 @@ class Client:
         msg = login.bytes_to_int(msg)
 
         self.__socket.send({
-            "receiver": id_,
+            "receiver": self.dict_clients[id_].id,
             "type": "text",
             "message": msg})
 
@@ -148,7 +148,7 @@ class Client:
                 self.running = False
                 break
 
-            if recv.get("author") == "Server":
+            if recv.get("author") == "0":
                 self.__server(recv["message"])
             else:
                 self._on_message(recv)
@@ -162,6 +162,7 @@ class Client:
                     self.__text_msg_group(recv)
 
     def __server(self, msg):
+        print(f"{msg = }")
         if msg["command"] == "#C" and not self.running:
             self.__socket.close()
             sys.exit()
@@ -170,7 +171,7 @@ class Client:
             global sk
             mode = msg["mode"]
             user_name = msg["name"]
-
+            print(0)
             if mode == "-":
                 for user in self.dict_clients.items():
                     if user[0] == user_name:
@@ -178,6 +179,7 @@ class Client:
                         return
 
             elif mode == "+":
+                print(1)
                 key = msg["key"]
                 key = login.int_to_bytes(int(key))
                 key = cipher.RSA_decrypt(self.sk, key)
@@ -250,8 +252,8 @@ class Client:
         #  decrypt message
         msg = int(recv["message"])
         msg = login.int_to_bytes(msg)
-        print(self.dict_clients)
-        print(recv)
+        print(f"{self.dict_clients = }")
+        print(f"{recv = }")
         msg = cipher.AES_decrypt_text(msg, self.dict_clients[recv['author']].key)
         msg = str(msg, "utf-8")
         recv["message"] = msg

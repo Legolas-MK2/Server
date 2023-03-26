@@ -116,6 +116,8 @@ class Client_Handler(threading.Thread):
         pass
 
     def __client2server(self, data: dict):
+        if not self.running:
+            pass
         if data["command"] == '#C':
             print(f"Der Client {self.Name} wird geschlossen")
 

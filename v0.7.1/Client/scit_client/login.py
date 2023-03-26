@@ -23,7 +23,6 @@ def set_name(sock, name):
     recv = sock.read()
 
     msg = recv.get("message")
-    print(recv)
     id = recv["receiver"]
     if msg == "OK":
         return name, id
@@ -39,6 +38,7 @@ def get_clients_keys(sock) -> dict:
         recv = recv["message"]
 
         if recv == "OK":
+
             return users
 
         name = recv["name"]

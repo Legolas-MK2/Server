@@ -73,7 +73,7 @@ def get_name(sock: socket.My_Socket, client_list, id_) -> str:
 
 def connect_to_all(sock: socket.My_Socket, list_client, name, id_):
     for c in list_client:
-        if list_client[c].Name != name and c[-1] != " ":
+        if list_client[c].Name != name:
             pk = bytes_to_int(list_client[c].pk)
 
             sock.send({"author": 0,
@@ -81,7 +81,7 @@ def connect_to_all(sock: socket.My_Socket, list_client, name, id_):
                        "message": {
                            "name": list_client[c].Name,
                            "key": str(pk),
-                           "id": id_
+                           "id": list_client[c].id
                        }})
 
             recv = sock.read()["message"]
