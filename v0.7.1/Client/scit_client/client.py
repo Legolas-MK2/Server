@@ -19,7 +19,7 @@ class ClientConnection:
         self.name = name
         self.key = key
 
-    def send_test(self, msg):
+    def send_text(self, msg):
         pass
 
     def send_file(self, filepath):
@@ -30,6 +30,7 @@ class Client:
     running = False
 
     def __init__(self, start_async=False):
+
         self.__name: str = ""  # username
 
         self.dict_clients: Dict[int, ClientConnection] = {}  # dict with all other clients
@@ -45,7 +46,7 @@ class Client:
         # make Socket
         self.__socket = My_Socket()
         if start_async:
-            asyncio.run(self._async_start_connection())
+            self._async_start_connection()
         else:
             self._start_connection()
 
@@ -90,7 +91,6 @@ class Client:
                 self.dict_clients[id_] = ClientConnection(id_, cipher.generate_key(20), self.__name)
                 clients_keys = login.get_clients_keys(self.__socket)
                 self.dict_clients.update(clients_keys)
-                print(f"{self.dict_clients = }")
             except DisconnectServerError:
                 self.close()
             threading.Thread(target=self.__recv).start()
@@ -162,7 +162,6 @@ class Client:
                     self.__text_msg_group(recv)
 
     def __server(self, msg):
-        print(f"{msg = }")
         if msg["command"] == "#C" and not self.running:
             self.__socket.close()
             sys.exit()
@@ -171,7 +170,6 @@ class Client:
             global sk
             mode = msg["mode"]
             user_name = msg["name"]
-            print(0)
             if mode == "-":
                 for user in self.dict_clients.items():
                     if user[0] == user_name:
@@ -179,11 +177,11 @@ class Client:
                         return
 
             elif mode == "+":
-                print(1)
                 key = msg["key"]
                 key = login.int_to_bytes(int(key))
                 key = cipher.RSA_decrypt(self.sk, key)
-                self.dict_clients[user_name] = key
+                con = ClientConnection(msg["id"], key, user_name)
+                self.dict_clients[msg["id"]] = con
         elif msg["command"] == "#GA":
             self.list_groups.append(msg["name"])
 
@@ -199,16 +197,24 @@ class Client:
         if float(packet_count) == float(os.path.getsize(file_path) / buffer_recv) + 1:
             send_packet_count -= 1
 
+        for client in self.dict_clients.values():
+            if client.name == receiver or client.id == receiver:
+                key = client.key
+                id_ = client.id
+                break
+        else:
+            print("Empfänger nicht in der liste gefunden")
+            return
+
         self.__socket.send({
-            "author": self.__name,
-            "receiver": receiver,
+            "receiver": id_,
             "type": "file",
             "message": {
-                "receiver": receiver,
+                "receiver": id_,
                 "file_name": basename,
                 "packet_count": send_packet_count
             }})
-        self.__socket.send_file(file_path, packet_count, self.dict_clients[receiver])
+        self.__socket.send_file(file_path, packet_count, self.dict_clients[id_].key)
         return "ok"
 
     def group_create(self, name):
@@ -244,8 +250,16 @@ class Client:
 
     def __file_msg(self, recv):
         msg = recv["message"]
-        #   get file
-        t = threading.Thread(target=self.__socket.read_file, args=(self.config["filepath"]+msg["file_name"], int(msg["packet_count"]), self.dict_clients[recv['author']]))
+        for client in self.dict_clients.values():
+            if client.name == recv["author"] or client.id == recv["author"]:
+                key = client.key
+                id_ = client.id
+                break
+        else:
+            print("Empfänger nicht in der liste gefunden")
+            return
+
+        t = threading.Thread(target=self.__socket.read_file, args=(self.config["filepath"]+msg["file_name"], int(msg["packet_count"]), self.dict_clients[id_].key))
         t.start()
 
     def __text_msg(self, recv: dict):

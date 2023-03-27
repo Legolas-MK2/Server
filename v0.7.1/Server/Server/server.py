@@ -83,7 +83,7 @@ class Client_Handler(threading.Thread):
 
                 #   Message forwarding
                 self.__forwarding(data)
-        except DisconnectClientError:
+        except DisconnectClientError as e:
             self.error()
 
         for stream in self.filestreams:
@@ -101,16 +101,11 @@ class Client_Handler(threading.Thread):
 
         if self.Name == "":  # hat der Client schon ein Name
             print(f"{bcolors.FAIL}Die Verbindung vom Client mit der ID {self.id} ist abgestürzt {bcolors.END}")
-            print(list_client)
             list_client.pop(f"{self.id} ")
         else:
             print(f"{bcolors.FAIL}Die Verbindung vom Client mit dem Namen {self.Name} ist abgestürzt {bcolors.END}")
-            print(list_client)
-            #TODO
-            try:
-                list_client.pop(self.id)
-            except KeyError:
-                pass
+
+            list_client.pop(self.id)
 
     def on_finnish_filestream(self):
         pass
@@ -129,8 +124,9 @@ class Client_Handler(threading.Thread):
                     "command": "#C"
                 }})
 
+            del list_client[self.id]
             print(f"Der Client {self.Name} wurde geschlossen")
-            list_client.pop(self.Name)
+
         elif data["command"] == "#O":
             pass
         elif data["command"] == "#G":
@@ -161,7 +157,7 @@ class Client_Handler(threading.Thread):
         pass
 
     def __forwarding(self, data):
-        #TODO what if the receiver not exist
+        #  TODO what if the receiver doesnt exist
         if data.get("type") == "text":
             #if data["receiver"] not in list_client:
             #    print(f"{bcolors.WARNING}Der Client {data['receiver']} wurde nicht gefunden{bcolors.END}")
@@ -189,8 +185,6 @@ class Client_Handler(threading.Thread):
         self.send(data)
 
     def send(self, data):
-        print(data)
-        print(list_client)
         id_receiver = data["receiver"]
         receiver = list_client[int(id_receiver)]
 
@@ -238,9 +232,6 @@ class Client_Handler(threading.Thread):
 
     def on_close(self):
         pass
-
-    def __del__(self):
-        self.error()
 
     @staticmethod
     def __sub_from_onlinelist(name):
@@ -359,6 +350,9 @@ class Server_Handler:
             print("port ist belegt")
             exit()
         self.current_id = self.server_config["current_id"]
+
+    def async_connect_client(self, class_client=Client_Handler):
+        threading.Thread(target=self.connect_client).start()
 
     def connect_client(self, class_client=Client_Handler):
         print("Warte auf neue Verbindung...")

@@ -73,9 +73,10 @@ def get_name(sock: socket.My_Socket, client_list, id_) -> str:
 
 def connect_to_all(sock: socket.My_Socket, list_client, name, id_):
     for c in list_client:
-        if list_client[c].Name != name:
+        if list_client[c].Name != name and list_client[c].running:
             pk = bytes_to_int(list_client[c].pk)
 
+            print(f"{list_client[c].id = }")
             sock.send({"author": 0,
                        "receiver": name,
                        "message": {
@@ -92,6 +93,7 @@ def connect_to_all(sock: socket.My_Socket, list_client, name, id_):
                                           "message": {"command": "#O",
                                                       "mode": "+",
                                                       "name": name,
+                                                      "id": id_,
                                                       "key": recv["key"]}})
             else:
                 print(f"{bcolors.WARNING}Warning: in connect_to_all")

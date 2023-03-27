@@ -4,22 +4,15 @@ codetester.fall_in_exception = True
 
 
 @codetester.debugging
-def normale_verbindung():
-    from Server.Server.server import Server_Handler, Client_Handler
+def nur_verbinden():
+    from Server.Server.server import Server_Handler
     from Client.scit_client.client import Client as Cl
 
-    class Client(Cl):
-        def __init__(self):
-            super().__init__()
-            self.valid = self.set_name("a")
+    server = Server_Handler()
+    server.async_connect_client()
+    client = Cl()
+    client.close()
 
-    class Server(Server_Handler):
-        def __init__(self):
-            super().__init__()
-            self.connect_client()
-
-    server = Server()
-    client = Client()
 
 
 #client sendet an sich selber

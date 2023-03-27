@@ -13,9 +13,9 @@ def get_server_keys(sock):
     return pk, sk, key_server
 
 
-def set_name(sock, name):
+def set_name(sock, name) -> tuple:
     if name[:6] == "Server" or " " in name or name == "":
-        return None
+        return None, None
 
     sock.send({"receiver": 0,
                "type": "name",

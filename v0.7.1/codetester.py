@@ -1,6 +1,7 @@
-import contextlib
-import inspect, sys, functools
-import io
+import contextlib, inspect, sys, functools, io
+import multiprocessing
+import time
+from multiprocessing import Process
 
 from my_module import *
 
@@ -13,12 +14,16 @@ def debugging(myfunc):
     def wrapper_func(*args, **kwargs):
         print(f"{' '.join(myfunc.__name__.split('_'))} ➤ ", end="")
         if fall_in_exception:
-            myfunc(*args, **kwargs)
+            process = multiprocessing.Process(target=myfunc)
+            process.start()
+            process.join()
             return wrapper_func
         try:
             with contextlib.redirect_stdout(io.StringIO()):
                 pass
-            myfunc(*args, **kwargs)
+            process = multiprocessing.Process(target=myfunc)
+            process.start()
+            process.join()
             print("✔")
         except Exception as e:
             print("✘")
