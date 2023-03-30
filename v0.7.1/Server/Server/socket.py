@@ -56,12 +56,13 @@ class My_Socket:
         self.socket.send(row)
 
     def __del__(self):
+        print("clooose")
         try:
             self.socket.close()
             self.recv_sock.close()
             self.send_sock.close()
         except AttributeError:
-            pass
+            print("erroooor")
 
     def file_stream(self, sock_receiver, packet_count, filename, sender_name):
         conn_recv = None
@@ -69,7 +70,6 @@ class My_Socket:
         try:
             print("warte auf sender")
             conn_recv, _ = self.recv_sock.accept()
-            print(type(conn_recv))
             print("warte auf Empfänger")
             conn_send, _ = self.send_sock.accept()
             print("start sending file")

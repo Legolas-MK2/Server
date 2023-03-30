@@ -118,11 +118,12 @@ class Client_Handler(threading.Thread):
 
             self.running = False
             self.__sub_from_onlinelist(self.Name)
-            self.sock.send({
-                "author": 0,
-                "message": {
-                    "command": "#C"
-                }})
+            self.sock.send(
+                {"author": 0,
+                 "message": {
+                     "command": "#C"
+                 }}
+            )
 
             del list_client[self.id]
             print(f"Der Client {self.Name} wurde geschlossen")
@@ -192,11 +193,11 @@ class Client_Handler(threading.Thread):
         print("msg ->", data["message"])
 
         receiver.sock.send(
-            {
-                "author": self.id,
-                "receiver": id_receiver,
-                "type": "text",
-                "message": data["message"]})
+            {"author": self.id,
+             "receiver": id_receiver,
+             "type": "text",
+             "message": data["message"]}
+        )
 
     def send_file(self, data):
         receiver = data["receiver"]
@@ -206,15 +207,14 @@ class Client_Handler(threading.Thread):
         if receiver not in list_client:
             return
 
-        list_client[receiver].sock.send({
-            "author": self.Name,
-            "type": "file",
-            "message": {
-                "file_name": msg['file_name'],
-                "packet_count": packet_count
-
-            }
-        })
+        list_client[receiver].sock.send(
+            {"author": self.Name,
+             "type": "file",
+             "message": {
+                 "file_name": msg['file_name'],
+                 "packet_count": packet_count}
+             }
+        )
 
         print(f"{self.Name} --> {receiver}")
         print("msg = file")
@@ -270,6 +270,10 @@ class Client_Handler(threading.Thread):
             print(e)
         print(f"Der Client {self.Name} wurde geschlossen")
         list_client.pop(self.Name)
+
+    def __del__(self):
+        print("lfkjefil")
+        self.sock.__del__()
 
 
 class Group_Handler:
@@ -372,7 +376,14 @@ class Server_Handler:
     def __del__(self):
         global list_client
 
-        del list_client
+        try:
+            clients = list_client.values()
+            for client in clients:
+                client.__del__()
+
+        except AttributeError:
+            pass
+
         try:
             if not self.server_socket:
                 self.server_socket.shutdown(socket.SHUT_RD)
