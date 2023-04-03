@@ -52,7 +52,7 @@ def get_name(sock: socket.My_Socket, client_list, id_) -> str:
 
         continue_ = False
         for s in client_list:
-            if client_list[s].Name == name:
+            if client_list[s].name == name:
                 sock.send(0, "This name already exists", "Server")
                 print("This name already exists")
                 break
@@ -64,12 +64,12 @@ def get_name(sock: socket.My_Socket, client_list, id_) -> str:
 
 def connect_to_all(sock: socket.My_Socket, list_client, name, id_):
     for c in list_client:
-        if list_client[c].Name != name and list_client[c].running:
+        if list_client[c].name != name and list_client[c].running:
             pk = bytes_to_int(list_client[c].pk)
             sock.send(
                 0,
                 {
-                    "name": list_client[c].Name,
+                    "name": list_client[c].name,
                     "key": str(pk),
                     "id": list_client[c].id
                 },
@@ -77,7 +77,7 @@ def connect_to_all(sock: socket.My_Socket, list_client, name, id_):
 
             recv = sock.read()["message"]
 
-            if list_client[c].Name == recv["name"]:
+            if list_client[c].name == recv["name"]:
                 list_client[c].sock.send(
                     0,
                     {
@@ -90,7 +90,7 @@ def connect_to_all(sock: socket.My_Socket, list_client, name, id_):
                     "Server")
             else:
                 print(f"{bcolors.WARNING}Warning: in connect_to_all")
-                print(f"client_list[c].Name ='{list_client[c].Name}'")
+                print(f"client_list[c].Name ='{list_client[c].name}'")
                 print(f"recv[0] ='{recv[0]}'{bcolors.END}")
 
     sock.send(0, "OK", "Server")

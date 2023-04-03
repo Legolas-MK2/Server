@@ -30,9 +30,9 @@ def rsa_decrypt(sk, c):
 def aes_encrypt_file(file_path, key):
     with open(file_path, 'rb') as file:
         file_bytes = file.read()
-    IV = Random.new().read(16)
-    cipher = AES.new(key, AES.MODE_CFB, IV)
-    encrypted_bytes = IV + cipher.encrypt(file_bytes)
+    iv = Random.new().read(16)
+    cipher = AES.new(key, AES.MODE_CFB, iv)
+    encrypted_bytes = iv + cipher.encrypt(file_bytes)
 
     return encrypted_bytes
 
@@ -71,9 +71,4 @@ def generate_key(size):
 
 
 chunks = 32 * 1024
-if __name__ == "__main__":
-    key = b'\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10'
-    crypt_bytes = aes_encrypt_file("client.py", key)
-    print(crypt_bytes)
-    decrypt = aes_decrypt_file(crypt_bytes, key)
-    print(decrypt)
+

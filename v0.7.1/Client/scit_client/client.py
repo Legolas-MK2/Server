@@ -35,7 +35,7 @@ class Client:
         self.dict_clients: Dict[int, ClientConnection] = {}  # dict with all other clients
         self.list_groups = []
         self.config = {
-            "filepath": "file/"  # the downloaded files are stored under the path
+            "filepath": "file/"  # save receiving files under this path
         }
 
         # make Socket
@@ -125,8 +125,7 @@ class Client:
         msg = cipher.aes_encrypt_text(msg, key)
         msg = login.bytes_to_int(msg)
 
-        # TODO self.dict_clients[id_].id ==> id_
-        self.__socket.send(self.dict_clients[id_].id, msg, "text")
+        self.__socket.send(id_, msg, "text")
 
         return "OK"
 

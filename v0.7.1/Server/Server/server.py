@@ -28,7 +28,7 @@ class Client_Handler(threading.Thread):
         threading.Thread.__init__(self)
         self.id = id_
         self.sock = sock
-        self.Name = ""
+        self.name = ""
         self.running = False
         self.pk = b""
         self.filestreams = []
@@ -45,8 +45,8 @@ class Client_Handler(threading.Thread):
         self.sock.key = login.get_key(self.sock, self.pk)
 
         #   set Name
-        self.Name = login.get_name(self.sock, list_client, self.id)
-        if self.Name == "":
+        self.name = login.get_name(self.sock, list_client, self.id)
+        if self.name == "":
             self.error()
             return
 
@@ -56,20 +56,20 @@ class Client_Handler(threading.Thread):
         if not server_config.get("names"):
             server_config["names"] = []
 
-        if self.Name in server_config["names"]:
+        if self.name in server_config["names"]:
             print("erneutes anmelden")
         else:
-            server_config["names"].append(self.Name)
+            server_config["names"].append(self.name)
             with open("config.json", "w") as f:
                 json.dump(server_config, f)
 
-        print(f"{bcolors.OKGREEN}Der Nutzer {self.Name} hat sich eingeloggt "
+        print(f"{bcolors.OKGREEN}Der Nutzer {self.name} hat sich eingeloggt "
               f"und hat die ID {self.id} bekommen{bcolors.END}")
         list_client[self.id] = list_client.pop(str(self.id) + " ")
 
         try:
             #   send all other clients keys
-            login.connect_to_all(self.sock, list_client, self.Name, self.id)
+            login.connect_to_all(self.sock, list_client, self.name, self.id)
 
             #   client-main-loop
             self.running = True
@@ -93,20 +93,20 @@ class Client_Handler(threading.Thread):
             stream.terminate()
             stream.join()
 
-        print(f"Der Thread vom Client {self.Name if len(self.Name)> 0 else self.id} hat sich geschlossen")
+        print(f"Der Thread vom Client {self.name if len(self.name) > 0 else self.id} hat sich geschlossen")
 
     def error(self):
         self.running = False
         try:
-            self.__sub_from_onlinelist(self.Name)
+            self.__sub_from_onlinelist(self.name)
         except ConnectionError:
             pass
 
-        if self.Name == "":  # hat der Client schon ein Name
+        if self.name == "":  # hat der Client schon ein Name
             print(f"{bcolors.FAIL}Die Verbindung vom Client mit der ID {self.id} ist abgestürzt {bcolors.END}")
             list_client.pop(f"{self.id} ")
         else:
-            print(f"{bcolors.FAIL}Die Verbindung vom Client mit dem Namen {self.Name} ist abgestürzt {bcolors.END}")
+            print(f"{bcolors.FAIL}Die Verbindung vom Client mit dem Namen {self.name} ist abgestürzt {bcolors.END}")
 
             list_client.pop(self.id)
 
@@ -117,15 +117,15 @@ class Client_Handler(threading.Thread):
         if not self.running:
             pass
         if data["command"] == '#C':
-            print(f"Der Client {self.Name} wird geschlossen")
+            print(f"Der Client {self.name} wird geschlossen")
 
             self.running = False
-            self.__sub_from_onlinelist(self.Name)
+            self.__sub_from_onlinelist(self.name)
 
             self.sock.send(0, {"command": "#C"}, "Server")
 
             del list_client[self.id]
-            print(f"Der Client {self.Name} wurde geschlossen")
+            print(f"Der Client {self.name} wurde geschlossen")
 
         elif data["command"] == "#O":
             pass
@@ -150,14 +150,14 @@ class Client_Handler(threading.Thread):
         elif self.on_server_message(data):
             pass
         else:
-            print(f"{bcolors.WARNING}Der Client {self.Name} hat versucht an den Server "
+            print(f"{bcolors.WARNING}Der Client {self.name} hat versucht an den Server "
                   f"die Nachricht '{data}' zusenden ohne das der Server eine Antwort hat{bcolors.END}")
 
     def on_server_message(self, data):
         pass
 
     def __forwarding(self, data):
-        #  TODO what if the receiver doesnt exist
+        # TODO what if the receiver doesnt exist
         if data.get("type") == "text":
             # if data["receiver"] not in list_client:
             #    print(f"{bcolors.WARNING}Der Client {data['receiver']} wurde nicht gefunden{bcolors.END}")
@@ -174,7 +174,7 @@ class Client_Handler(threading.Thread):
             # if data["receiver"] not in self.list_groups:
             #    print(f"die group {data['receiver']} wurde nicht gefunden")
             #    return
-            self.list_groups[data["receiver"]].send_text(self.Name, data["message"])
+            self.list_groups[data["receiver"]].send_text(self.name, data["message"])
         else:
             print("ungültiger type angegeben")
 
@@ -188,7 +188,7 @@ class Client_Handler(threading.Thread):
         id_receiver = data["receiver"]
         receiver = list_client[int(id_receiver)]
 
-        print(f"{self.Name} --> {receiver}")
+        print(f"{self.name} --> {receiver}")
         print("msg ->", data["message"])
 
         self.sock.send(self.id, data["message"], "text")
@@ -202,7 +202,7 @@ class Client_Handler(threading.Thread):
             return
 
         list_client[receiver].sock.send(
-            self.Name,
+            self.name,
             {
                 "file_name": msg['file_name'],
                 "packet_count": packet_count
@@ -210,7 +210,7 @@ class Client_Handler(threading.Thread):
             "file"
         )
 
-        print(f"{self.Name} --> {receiver}")
+        print(f"{self.name} --> {receiver}")
         print("msg = file")
         print(f"filename = {msg['file_name']}")
 
@@ -219,7 +219,7 @@ class Client_Handler(threading.Thread):
             args=[list_client[receiver].sock,
                   int(packet_count),
                   msg['file_name'],
-                  self.Name])
+                  self.name])
         stream.start()
 
         self.filestreams.append(stream)
@@ -258,12 +258,12 @@ class Client_Handler(threading.Thread):
     def force_close(self):
         self.running = False
         try:
-            self.__sub_from_onlinelist(self.Name)
+            self.__sub_from_onlinelist(self.name)
             self.sock.send(0, {"command": "#C"}, "Server")
         except Exception as e:
             print(e)
-        print(f"Der Client {self.Name} wurde geschlossen")
-        list_client.pop(self.Name)
+        print(f"Der Client {self.name} wurde geschlossen")
+        list_client.pop(self.name)
 
     def __del__(self):
         print("lfkjefil")
@@ -287,7 +287,7 @@ class Group_Handler:
         if not self.__size or len(self.__list_members) <= self.__size:
             self.on_add(client)
         else:
-            print(f"{client.Name} konnte nicht gespeichert werden")
+            print(f"{client.name} konnte nicht gespeichert werden")
 
     def on_add(self, client: Client_Handler):
         self.add(client)

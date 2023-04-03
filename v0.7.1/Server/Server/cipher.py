@@ -59,7 +59,6 @@ def aes_decrypt_file(filename, key):
         with open(out_file_name, "wb") as f_output:
             while True:
                 chunk = f_input.read(chunks)
-
                 if len(chunk) == 0:
                     break
 
