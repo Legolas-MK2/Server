@@ -36,11 +36,11 @@ class Client_Handler(threading.Thread):
         self.list_groups: Dict[str, Group_Handler] = {}
 
     def run(self):
-
         self.pk = self.sock.read_row()
         if self.pk == b'':
             self.error()
             return
+
         #   set AES key
         self.sock.key = login.get_key(self.sock, self.pk)
 
@@ -75,7 +75,10 @@ class Client_Handler(threading.Thread):
             self.running = True
             while self.running:
                 data = self.sock.read()
-                data["receiver"] = int(data["receiver"])
+                try:
+                    data["receiver"] = int(data["receiver"])
+                except ValueError:
+                    pass
                 #   if the message is addressed to the server
                 if data["receiver"] == 0:
                     self.__client2server(data["message"])
@@ -83,7 +86,7 @@ class Client_Handler(threading.Thread):
 
                 #   Message forwarding
                 self.__forwarding(data)
-        except DisconnectClientError as e:
+        except DisconnectClientError:
             self.error()
 
         for stream in self.filestreams:
@@ -118,12 +121,8 @@ class Client_Handler(threading.Thread):
 
             self.running = False
             self.__sub_from_onlinelist(self.Name)
-            self.sock.send(
-                {"author": 0,
-                 "message": {
-                     "command": "#C"
-                 }}
-            )
+
+            self.sock.send(0, {"command": "#C"}, "Server")
 
             del list_client[self.id]
             print(f"Der Client {self.Name} wurde geschlossen")
@@ -160,19 +159,19 @@ class Client_Handler(threading.Thread):
     def __forwarding(self, data):
         #  TODO what if the receiver doesnt exist
         if data.get("type") == "text":
-            #if data["receiver"] not in list_client:
+            # if data["receiver"] not in list_client:
             #    print(f"{bcolors.WARNING}Der Client {data['receiver']} wurde nicht gefunden{bcolors.END}")
             #    return
 
             self.on_text_message(data)
         elif data.get("type") == "file":
-            #if data["receiver"] not in list_client:
+            # if data["receiver"] not in list_client:
             #    print(f"{bcolors.WARNING}Der Client {data['receiver']} wurde nicht gefunden{bcolors.END}")
             #    return
 
             self.on_file_message(data)
         elif data.get("type") == "text_group":
-            #if data["receiver"] not in self.list_groups:
+            # if data["receiver"] not in self.list_groups:
             #    print(f"die group {data['receiver']} wurde nicht gefunden")
             #    return
             self.list_groups[data["receiver"]].send_text(self.Name, data["message"])
@@ -189,15 +188,10 @@ class Client_Handler(threading.Thread):
         id_receiver = data["receiver"]
         receiver = list_client[int(id_receiver)]
 
-        print(f"{self.Name} --> {id_receiver}")
+        print(f"{self.Name} --> {receiver}")
         print("msg ->", data["message"])
 
-        receiver.sock.send(
-            {"author": self.id,
-             "receiver": id_receiver,
-             "type": "text",
-             "message": data["message"]}
-        )
+        self.sock.send(self.id, data["message"], "text")
 
     def send_file(self, data):
         receiver = data["receiver"]
@@ -208,12 +202,12 @@ class Client_Handler(threading.Thread):
             return
 
         list_client[receiver].sock.send(
-            {"author": self.Name,
-             "type": "file",
-             "message": {
-                 "file_name": msg['file_name'],
-                 "packet_count": packet_count}
-             }
+            self.Name,
+            {
+                "file_name": msg['file_name'],
+                "packet_count": packet_count
+            },
+            "file"
         )
 
         print(f"{self.Name} --> {receiver}")
@@ -242,12 +236,16 @@ class Client_Handler(threading.Thread):
         for s in list_client:
             if not list_client[s].running:
                 continue
-            j = {"author": 0,
-                 "receiver": list_client[s].Name,
-                 "message": {"command": "#O",
-                             "mode": "-",
-                             "name": name}}
-            list_client[s].sock.send(j)
+
+            list_client[s].sock.send(
+                0,
+                {
+                    "command": "#O",
+                    "mode": "-",
+                    "name": name
+                },
+                "Server"
+            )
 
     @staticmethod
     def bytes_to_int(xbytes: bytes) -> int:
@@ -261,11 +259,7 @@ class Client_Handler(threading.Thread):
         self.running = False
         try:
             self.__sub_from_onlinelist(self.Name)
-            self.sock.send({
-                "author": 0,
-                "message": {
-                    "command": "#C"
-                }})
+            self.sock.send(0, {"command": "#C"}, "Server")
         except Exception as e:
             print(e)
         print(f"Der Client {self.Name} wurde geschlossen")
@@ -300,30 +294,23 @@ class Group_Handler:
 
     def add(self, client: Client_Handler):
         self.__list_members.append(client)
-        client.sock.send({
-            "author": 0,
-            "message": {
+
+        client.sock.send(
+            0,
+            {
                 "command": "#GA",
                 "name": self.name,
                 "clients": self.__list_members
-            }})
+            },
+            "Server")
+
         client.list_groups[self.name] = self
 
     def send_text(self, author, message):
         print(f"msg = {message}")
         print(self.__list_members)
         for member in self.__list_members:
-            member.sock.send({
-                    "author": author,
-                    "group": self.name,
-                    "type": "text_group",
-                    "message": message
-                })
-
-
-# Global Variable
-list_client = {}
-file_request = {}
+            member.sock.send(author, message, "text_group", group=self.name)
 
 
 class Server_Handler:
@@ -356,7 +343,7 @@ class Server_Handler:
         self.current_id = self.server_config["current_id"]
 
     def async_connect_client(self, class_client=Client_Handler):
-        threading.Thread(target=self.connect_client).start()
+        threading.Thread(target=self.connect_client, args=(class_client, )).start()
 
     def connect_client(self, class_client=Client_Handler):
         print("Warte auf neue Verbindung...")
@@ -364,6 +351,7 @@ class Server_Handler:
             (socket_, addr) = self.server_socket.accept()
         except KeyboardInterrupt:
             exit()
+
         sock = My_Socket(socket_, self.recv_sock, self.send_sock)
         list_client[str(self.current_id) + " "] = class_client(self.current_id, sock)
         list_client[str(self.current_id) + " "].start()
@@ -404,3 +392,7 @@ class Server_Handler:
                 self.send_sock.close()
         except AttributeError:
             pass
+
+
+# Global Variable
+list_client = {}

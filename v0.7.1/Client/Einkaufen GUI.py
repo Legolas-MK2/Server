@@ -21,6 +21,8 @@ class Client(Cl):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.manager: Manager = None
+
+    def on_connected(self):
         self.set_name("b")
         if not self.get_name():
             print("name already used")
@@ -28,10 +30,10 @@ class Client(Cl):
         self.group_create("t")
 
     def inc_element(self, name, count):
-        self.group_send("t", {"name": name, "mode": "inc", "count": count})
+        self.group_send("t", {"name": name, "count": -count})
 
     def dec_element(self, name, count):
-        self.group_send("t", {"name": name, "mode": "dec", "count": count})
+        self.group_send("t", {"name": name, "count": count})
 
     def read(self, recv: dict):
         print(f"{recv = }")
@@ -55,7 +57,7 @@ class Main_Element(TwoLineAvatarIconListItem):
         self.count -= 1
         self.secondary_text = str(int(self.count))
         if self.count == 0:
-            client.inc_element(self.name, 999)
+            self.del_element()
         else:
             client.inc_element(self.name, 1)
 
@@ -132,6 +134,10 @@ client = Client(start_async=True)
 Builder.load_file("Einkaufen GUI.kv")
 
 if __name__ == "__main__":
-    ScreenApp().run()
+    try:
+        ScreenApp().run()
+    except KeyboardInterrupt:
+        pass
+
     if client:
         client.close()

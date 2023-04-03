@@ -3,7 +3,6 @@ import json
 import socket
 from time import sleep
 from base64 import b64encode, b64decode
-import atexit
 
 # own module
 from . import cipher
@@ -33,20 +32,27 @@ class My_Socket:
             raise DisconnectClientError
 
         if crypt:
-            recv = cipher.AES_decrypt_text(recv, self.key)
+            recv = cipher.aes_decrypt_text(recv, self.key)
             recv = recv.decode("utf-8")
             recv = bytes2json(recv)
 
         sleep(0.1)
         return recv
 
-    def send(self, msg: dict, crypt=True, key=None):
-        if crypt:
-            msg = json2bytes(msg)
-            msg = cipher.AES_encrypt_text(msg, self.key)
+    def send(self, author: int, message, _type: str, *, group=None):
+        packet = {
+            "author": author,
+            "type": _type,
+            "message": message
+        }
+        if group:
+            packet["group"] = group
+
+        packet = json2bytes(packet)
+        packet = cipher.aes_encrypt_text(packet, self.key)
 
         sleep(0.1)
-        self.socket.send(msg)
+        self.socket.send(packet)
 
     def read_row(self):
         recv = self.socket.recv(buffer_recv)
@@ -56,7 +62,6 @@ class My_Socket:
         self.socket.send(row)
 
     def __del__(self):
-        print("clooose")
         try:
             self.socket.close()
             self.recv_sock.close()
@@ -81,7 +86,6 @@ class My_Socket:
             print("end sending file")
         except ConnectionResetError:
             print("filesending abbruch")
-            print(conn_recv)
 
         if not conn_recv:
             conn_recv.shutdown(socket.SHUT_RD)
