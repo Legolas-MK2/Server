@@ -8,8 +8,8 @@ from Crypto.Util.Padding import pad, unpad
 from hashlib import md5
 
 
-def rsa_generate_pk_sk():
-    key = RSA.generate(1024)
+def rsa_generate_pk_sk(key_size: int = 1204) -> tuple[bytes, bytes]:
+    key = RSA.generate(key_size)
     return key.publickey().exportKey('PEM'), key.exportKey(format="PEM")
 
 
@@ -51,6 +51,10 @@ def aes_decrypt_file(file_bytes, key, outfile=None):
 
 def aes_encrypt_text(data, key):
     vector = Random.get_random_bytes(AES.block_size)
+    print(f"{key = }")
+    print(f"{data = }")
+    print(f"{vector = }")
+
     encryption_cipher = AES.new(key, AES.MODE_CBC, vector)
     return vector + encryption_cipher.encrypt(pad(data, AES.block_size))
 
@@ -71,4 +75,3 @@ def generate_key(size):
 
 
 chunks = 32 * 1024
-

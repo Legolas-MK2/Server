@@ -83,10 +83,19 @@ def aes_get_key(passwort):
     return hashing.digest()
 
 
+def hash(byte):
+    h = SHA512.new()
+    h.update(byte)
+    return h.hexdigest()
+
+
 def generate_key(size):
     return md5(Random.get_random_bytes(size)).digest()
 
 
 chunks = 32 * 1024
 if __name__ == "__main__":
-    pass
+    t = "a"
+    for i in range(100000):
+        t = hash(t.encode())
+    print(t)

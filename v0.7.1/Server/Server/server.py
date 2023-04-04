@@ -54,7 +54,7 @@ class Client_Handler(threading.Thread):
             server_config = json.load(f)
 
         if not server_config.get("names"):
-            server_config["names"] = []
+            server_config["names"] = {}
 
         if self.name in server_config["names"]:
             print("erneutes anmelden")

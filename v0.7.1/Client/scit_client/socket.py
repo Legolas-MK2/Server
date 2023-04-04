@@ -39,11 +39,11 @@ class My_Socket:
         try:
             recv = self.socket.recv(buffer_recv)
         except ConnectionError:
-            raise DisconnectServerError("Der Server wurde unerwatet Beendert")
+            raise DisconnectServerError("Der Server wurde unerwartet Beendet")
 
         # Empty bytestring = server connection broken.
         if recv == b'':
-            raise DisconnectServerError("Der Server wurde unerwatet Beendert")
+            raise DisconnectServerError("Der Server wurde unerwartet Beendet")
         if crypt:
             recv = cipher.aes_decrypt_text(recv, self.key)
             recv = recv.decode("utf-8")
@@ -76,7 +76,7 @@ class My_Socket:
         try:
             self.socket.send(packet)
         except ConnectionError:
-            raise DisconnectServerError("Der Server wurde unerwatet Beendert")
+            raise DisconnectServerError("Der Server wurde unerwartet Beendet")
 
     def send(self, receiver: int, message, _type: str, *, group=None):
         packet = {
@@ -96,9 +96,9 @@ class My_Socket:
         try:
             self.socket.send(packet)
         except ConnectionError:
-            raise DisconnectServerError("Der Server wurde unerwatet Beendert")
+            raise DisconnectServerError("Der Server wurde unerwartet Beendet")
         except OSError:
-            raise DisconnectServerError("Der Server wurde unerwatet Beendert")
+            raise DisconnectServerError("Der Server wurde unerwartet Beendet")
 
     def send_file(self, path, packet_count, recver_key):
         ciphertext = cipher.aes_encrypt_file(path, recver_key)
@@ -107,7 +107,6 @@ class My_Socket:
             ex = 1
             while ex:
                 time.sleep(0.1)
-
                 ex = sock_temp.connect_ex((self.ip, self.port + 2))
 
             sock_temp.sendall(ciphertext)
@@ -119,18 +118,6 @@ class My_Socket:
             pass
 
         self.socket.close()
-
-
-def build_message(receiver: int, message, _type: str, *, group=None):
-    packet = {
-        "receiver": receiver,
-        "type": _type,
-        "message": message
-    }
-    if group:
-        packet["group"] = group
-
-    return packet
 
 
 def json2bytes(json_, recursive=False):
@@ -145,6 +132,8 @@ def json2bytes(json_, recursive=False):
     return bytes(json.dumps(json_), "utf-8")
 
 
+# converts bytes to a dictionary by decoding all base64-encoded string values
+# to bytes and then converting them to strings
 def bytes2json(bytes_, recursive=False):
     if recursive:
         json_ = bytes_
@@ -159,3 +148,7 @@ def bytes2json(bytes_, recursive=False):
             json_[key] = str(temp, "utf-8")
 
     return json_
+
+
+"""
+"""

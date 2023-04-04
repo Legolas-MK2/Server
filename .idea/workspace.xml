@@ -5,15 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="dabcacaa-cfb6-4562-9d68-b1e6e02b7e6f" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/v0.7.1/Client/Einkaufen GUI.py" beforeDir="false" afterPath="$PROJECT_DIR$/v0.7.1/Client/Einkaufen GUI.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v0.7.1/Client/file/chat.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/v0.7.1/Client/scit_client/cipher.py" beforeDir="false" afterPath="$PROJECT_DIR$/v0.7.1/Client/scit_client/cipher.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v0.7.1/Client/scit_client/client.py" beforeDir="false" afterPath="$PROJECT_DIR$/v0.7.1/Client/scit_client/client.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v0.7.1/Client/scit_client/login.py" beforeDir="false" afterPath="$PROJECT_DIR$/v0.7.1/Client/scit_client/login.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/v0.7.1/Client/scit_client/socket.py" beforeDir="false" afterPath="$PROJECT_DIR$/v0.7.1/Client/scit_client/socket.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v0.7.1/Server/Server/login.py" beforeDir="false" afterPath="$PROJECT_DIR$/v0.7.1/Server/Server/login.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v0.7.1/Server/Server/cipher.py" beforeDir="false" afterPath="$PROJECT_DIR$/v0.7.1/Server/Server/cipher.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/v0.7.1/Server/Server/server.py" beforeDir="false" afterPath="$PROJECT_DIR$/v0.7.1/Server/Server/server.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v0.7.1/Server/Server/socket.py" beforeDir="false" afterPath="$PROJECT_DIR$/v0.7.1/Server/Server/socket.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v0.7.1/Server/config.json" beforeDir="false" afterPath="$PROJECT_DIR$/v0.7.1/Server/config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v0.7.1/Server/config.json" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -34,6 +32,9 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="ProjectErrors" />
+  </component>
   <component name="ProjectId" id="2NjRpkjHsuS8rejb0kBscyscTtw" />
   <component name="ProjectLevelVcsManager">
     <OptionsSetting value="false" id="Update" />
@@ -48,10 +49,12 @@
     "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "last_opened_file_path": "/home/n/PycharmProjects/Server"
+    "last_opened_file_path": "/home/n/PycharmProjects/Server",
+    "run.code.analysis.last.selected.profile": "pProject Default",
+    "settings.editor.selected.configurable": "proofread"
   }
 }]]></component>
-  <component name="RunManager" selected="Python.chat">
+  <component name="RunManager" selected="Python.cipher">
     <configuration name="Einkaufen GUI" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Server" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -94,6 +97,27 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="cipher" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="Server" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/v0.7.1/Server/Server" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/v0.7.1/Server/Server/cipher.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Server" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -117,6 +141,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.cipher" />
         <item itemvalue="Python.chat" />
         <item itemvalue="Python.main" />
         <item itemvalue="Python.Einkaufen GUI" />

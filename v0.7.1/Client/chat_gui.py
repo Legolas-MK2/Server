@@ -44,7 +44,9 @@ class MyMainApp(MDApp):
         self.theme_cls.theme_style = "Dark"
         #sm.add_widget(test(name="defsd"))
         sm.add_widget(Chat(name='chat'))
-        sm.add_widget(MainWindow(test=" aljk", name='main'))
+        #sm.add_widget(MainWindow(test=" aljk", name='main'))
+        sm.add_widget(MainWindow(chat="fef", name='main'))
+
 
         return sm
 
