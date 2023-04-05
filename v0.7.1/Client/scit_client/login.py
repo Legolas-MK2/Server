@@ -24,7 +24,7 @@ def set_name(sock, name) -> tuple:
     # if the Server sends the id then everything is successful
     msg: str = recv.get("message")
     if msg.isnumeric():
-        return name, msg
+        return name, int(msg)
     else:
         print(msg)
         return None, None
@@ -58,6 +58,7 @@ def get_clients_keys(sock) -> dict:
             },
             "Server"
         )
+
 
 def bytes_to_int(xbytes: bytes) -> int:
     return int.from_bytes(xbytes, "little")

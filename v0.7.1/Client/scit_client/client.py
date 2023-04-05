@@ -30,6 +30,7 @@ class Client:
 
     def __init__(self, start_async=False):
 
+        self.on_connected = None
         self.__name: str = ""  # username
 
         self.dict_clients: Dict[int, ClientConnection] = {}  # dict with all other clients
@@ -69,8 +70,6 @@ class Client:
             self.close()
         self.running = True
         self.on_connected()
-
-    def empty(self, *args, **kwargs): pass
 
     def get_name(self):
         return self.__name
@@ -146,11 +145,12 @@ class Client:
         while self.running:
             try:
                 recv = self.__socket.read()
+                recv["author"] = int(recv["author"])
             except DisconnectServerError:
                 self.running = False
                 break
 
-            if recv.get("author") == "0":
+            if recv.get("author") == 0:
                 self.__server(recv["message"])
             else:
                 self.on_message(recv)
@@ -274,7 +274,7 @@ class Client:
         #  decrypt message
         msg = int(recv["message"])
         msg = login.int_to_bytes(msg)
-        msg = cipher.aes_decrypt_text(msg, self.dict_clients[recv['author']].key)
+        msg = cipher.aes_decrypt_text(msg, self.dict_clients[int(recv['author'])].key)
         msg = str(msg, "utf-8")
         recv["message"] = msg
 

@@ -76,7 +76,7 @@ class Client(Cl):
             os.system('cls' if os.name == 'nt' else 'clear')
 
         elif command[0] in keywords_online:
-            print(", ".join(list(self.dict_clients.keys())))
+            print(", ".join([c.name for c in self.dict_clients.values()]))
 
         elif command[0] in keywords_send_file:
             if len(command) < 3:
@@ -112,8 +112,8 @@ class Client(Cl):
             print(f"Command {command[0]} nicht gefunden")
 
     def read(self, recv: dict):
-        print(recv)
-        self.list_message.append(f"von {recv['author']}: {recv['message']}")
+        print(self.dict_clients)
+        self.list_message.append(f"von {self.dict_clients[int(recv['author'])]}: {recv['message']}")
 
 
 if __name__ == "__main__":

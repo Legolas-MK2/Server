@@ -51,10 +51,6 @@ def aes_decrypt_file(file_bytes, key, outfile=None):
 
 def aes_encrypt_text(data, key):
     vector = Random.get_random_bytes(AES.block_size)
-    print(f"{key = }")
-    print(f"{data = }")
-    print(f"{vector = }")
-
     encryption_cipher = AES.new(key, AES.MODE_CBC, vector)
     return vector + encryption_cipher.encrypt(pad(data, AES.block_size))
 

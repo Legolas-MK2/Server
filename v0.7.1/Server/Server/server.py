@@ -65,7 +65,6 @@ class Client_Handler(threading.Thread):
 
         print(f"{bcolors.OKGREEN}Der Nutzer {self.name} hat sich eingeloggt "
               f"und hat die ID {self.id} bekommen{bcolors.END}")
-        list_client[self.id] = list_client.pop(str(self.id) + " ")
 
         try:
             #   send all other clients keys
@@ -79,12 +78,12 @@ class Client_Handler(threading.Thread):
                     data["receiver"] = int(data["receiver"])
                 except ValueError:
                     pass
-                #   if the message is addressed to the server
+                # if the message is addressed to the server
                 if data["receiver"] == 0:
                     self.__client2server(data["message"])
                     continue
 
-                #   Message forwarding
+                # Message forwarding
                 self.__forwarding(data)
         except DisconnectClientError:
             self.error()
@@ -102,13 +101,8 @@ class Client_Handler(threading.Thread):
         except ConnectionError:
             pass
 
-        if self.name == "":  # hat der Client schon ein Name
-            print(f"{bcolors.FAIL}Die Verbindung vom Client mit der ID {self.id} ist abgestürzt {bcolors.END}")
-            list_client.pop(f"{self.id} ")
-        else:
-            print(f"{bcolors.FAIL}Die Verbindung vom Client mit dem Namen {self.name} ist abgestürzt {bcolors.END}")
-
-            list_client.pop(self.id)
+        print(f"{bcolors.FAIL}Die Verbindung vom Client mit dem Namen {self.name} ist abgestürzt {bcolors.END}")
+        list_client.pop(self.id)
 
     def on_finnish_filestream(self):
         pass
@@ -353,8 +347,8 @@ class Server_Handler:
             exit()
 
         sock = My_Socket(socket_, self.recv_sock, self.send_sock)
-        list_client[str(self.current_id) + " "] = class_client(self.current_id, sock)
-        list_client[str(self.current_id) + " "].start()
+        list_client[self.current_id] = class_client(self.current_id, sock)
+        list_client[self.current_id].start()
         print(bcolors.OKGREEN + "Ein neuer Client hat sich verbunden" + bcolors.END)
         self.current_id += 1
         self.server_config["current_id"] = self.current_id
