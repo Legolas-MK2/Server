@@ -22,6 +22,7 @@ class Client(Cl):
         super().__init__(**kwargs)
         self.manager: Manager = None
 
+
     def on_connected(self):
         self.set_name("b")
         if not self.get_name():

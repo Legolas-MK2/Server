@@ -25,6 +25,10 @@ class MainWindow(Screen):
 
 
 class Chat(Screen):
+    def __init__(self, chat_name, **kwargs):
+        super(Chat, self).__init__(**kwargs)
+
+        #self.add_widget(Label(text=chat_name))
     @staticmethod
     def set_screen(screen_name):
         sm.transition.direction = "right"

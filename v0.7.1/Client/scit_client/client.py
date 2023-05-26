@@ -18,12 +18,6 @@ class ClientConnection:
         self.name = name
         self.key = key
 
-    def send_text(self, msg):
-        pass
-
-    def send_file(self, filepath):
-        pass
-
 
 class Client:
     running = False
@@ -32,6 +26,7 @@ class Client:
 
         self.on_connected = None
         self.__name: str = ""  # username
+        self.cached_messages = []  # Variable to store cached messages until the server is online
 
         self.dict_clients: Dict[int, ClientConnection] = {}  # dict with all other clients
         self.list_groups = []

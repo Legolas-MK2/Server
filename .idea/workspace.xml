@@ -5,13 +5,36 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="dabcacaa-cfb6-4562-9d68-b1e6e02b7e6f" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/Server.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/Client/Einkaufen GUI.kv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/Client/Einkaufen GUI.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/Client/chat.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/Client/chat_gui.kv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/Client/chat_gui.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/Client/main_AZN.kv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/Client/main_AZN.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/Client/scit_client/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/Client/scit_client/cipher.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/Client/scit_client/client.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/Client/scit_client/login.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/Client/scit_client/socket.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/Server/Einkaufen.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/Server/Server/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/Server/Server/cipher.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/Server/Server/login.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/Server/Server/server.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/Server/Server/socket.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/Server/config.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/Server/main.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/Server/requirements.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/codetester.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/config.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/demo/my_module.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v0.7.1/Client/file/chat.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/v0.7.1/Client/scit_client/cipher.py" beforeDir="false" afterPath="$PROJECT_DIR$/v0.7.1/Client/scit_client/cipher.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v0.7.1/Client/scit_client/socket.py" beforeDir="false" afterPath="$PROJECT_DIR$/v0.7.1/Client/scit_client/socket.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v0.7.1/Server/Server/cipher.py" beforeDir="false" afterPath="$PROJECT_DIR$/v0.7.1/Server/Server/cipher.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v0.7.1/Server/Server/server.py" beforeDir="false" afterPath="$PROJECT_DIR$/v0.7.1/Server/Server/server.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/v0.7.1/Server/config.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/v0.7.1/Client/Einkaufen GUI.py" beforeDir="false" afterPath="$PROJECT_DIR$/v0.7.1/Client/Einkaufen GUI.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v0.7.1/Client/chat_gui.py" beforeDir="false" afterPath="$PROJECT_DIR$/v0.7.1/Client/chat_gui.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/v0.7.1/Client/scit_client/client.py" beforeDir="false" afterPath="$PROJECT_DIR$/v0.7.1/Client/scit_client/client.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -49,12 +72,18 @@
     "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "last_opened_file_path": "/home/n/PycharmProjects/Server",
     "run.code.analysis.last.selected.profile": "pProject Default",
-    "settings.editor.selected.configurable": "proofread"
+    "settings.editor.selected.configurable": "com.obiscr.chatgpt.settings.GPT3-3.5-Turbo"
   }
 }]]></component>
-  <component name="RunManager" selected="Python.cipher">
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python.test">
     <configuration name="Einkaufen GUI" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Server" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -97,6 +126,27 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="chat_gui" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="Server" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/v0.7.1/Client" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/v0.7.1/Client/chat_gui.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="cipher" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Server" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -118,7 +168,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Server" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -126,11 +176,11 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/v0.7.1/Server" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/demo" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/v0.7.1/Server/main.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/demo/test.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -141,10 +191,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.test" />
+        <item itemvalue="Python.Einkaufen GUI" />
+        <item itemvalue="Python.chat_gui" />
         <item itemvalue="Python.cipher" />
         <item itemvalue="Python.chat" />
-        <item itemvalue="Python.main" />
-        <item itemvalue="Python.Einkaufen GUI" />
       </list>
     </recent_temporary>
   </component>
